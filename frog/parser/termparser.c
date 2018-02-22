@@ -5,12 +5,12 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-static void kill_handler(int dummy)
+/*static void kill_handler(int dummy)
 {
 	UNUSED(dummy);
 	signal(SIGINT, kill_handler);
 	//printf("Need to interrupt\n");
-}
+}*/
 
 static fchar *nextline_terminal(tokenizer *tkz)
 {
