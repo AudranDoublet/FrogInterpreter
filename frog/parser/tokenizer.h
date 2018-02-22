@@ -71,6 +71,7 @@
 #define TOKEN_BREAK	0x47 // break
 #define TOKEN_TRY	0x48 // try
 #define TOKEN_CATCH	0x49 // catch
+#define TOKEN_PRINT	0x4a // print
 
 // Functions instructions
 #define TOKEN_RETURN	0x50 // return

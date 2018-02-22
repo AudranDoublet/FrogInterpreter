@@ -1,6 +1,6 @@
 #include "../frog.h"
 
-FrogType block_type, cond_type, while_type, breaker_type;
+FrogType block_type, cond_type, while_type, breaker_type, print_type;
 
 FrogObject *CreateBlock(void);
 
@@ -236,6 +236,45 @@ void free_breaker(FrogObject *o)
 	Unref(cond->value);
 }
 
+FrogObject *CreatePrint(FrogObject *value)
+{
+	FrogPrint *res = malloc(sizeof(FrogPrint));
+
+	if(!res)
+	{
+		FrogErr_Memory();
+		return NULL;
+	}
+
+	ObType(res) = &print_type;
+	res->value = value;
+
+	return (FrogObject *) res;
+}
+
+FrogObject *print_exec(FrogObject *env, FrogObject *o)
+{
+	FrogPrint *w = (FrogPrint *) o;
+	FrogObject *res = FrogNone();
+
+	if(w->value)
+	{
+		res = FrogCall_Exec(env, w->value);
+		if(!res) return NULL;
+	}
+
+	res = GetHybrid(res);
+	Frog_Print(res, stdout);
+	printf("\n");
+	return res;
+}
+
+void free_print(FrogObject *o)
+{
+	FrogPrint *cond = (FrogPrint *) o;
+	Unref(cond->value);
+}
+
 FrogType cond_type = {
 	{
 		-1,		// FIXME type
@@ -322,4 +361,26 @@ FrogType breaker_type = {
 	NULL,			// as sequence
 	NULL,			// call	
 	free_breaker		// free
+};
+
+FrogType print_type = {
+	{
+		-1,		// FIXME type
+		NULL		// refcnt
+	}, 
+	"print",		// type name
+	NULL,			// getter
+	NULL,			// setter
+	NULL,			// hash
+	NULL,			// size
+	NULL,			// print
+	NULL,			// tostr
+	NULL,			// toint
+	print_exec,		// exec
+	NULL,			// compare
+	NULL,			// compare 2
+	NULL,			// as number
+	NULL,			// as sequence
+	NULL,			// call	
+	free_print		// free
 };

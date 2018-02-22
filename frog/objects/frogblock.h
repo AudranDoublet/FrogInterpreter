@@ -28,6 +28,11 @@ typedef struct {
 	FrogObject *value;
 } FrogBreaker;
 
+typedef struct {
+	FrogObjHead
+	FrogObject *value;
+} FrogPrint;
+
 FrogObject *CreateBlock(void);
 
 FrogObject *CreateCondition(FrogObject *condition, FrogObject *thenBlock, FrogObject *elseBlock);
@@ -35,6 +40,8 @@ FrogObject *CreateCondition(FrogObject *condition, FrogObject *thenBlock, FrogOb
 FrogObject *CreateWhile(int dowhile, FrogObject *condition, FrogObject *block);
 
 FrogObject *CreateBreaker(int type, FrogObject *value);
+
+FrogObject *CreatePrint(FrogObject *value);
 
 int AddBlockElement(FrogObject *block, FrogObject *el);
 #endif

@@ -77,6 +77,7 @@ struct automatanode *frog_automata(void)
 	simple_automata(node, "abstract", TOKEN_ABSTRACT);
 	simple_automata(node, "private", TOKEN_PRIVATE);
 	simple_automata(node, "protected", TOKEN_PROTECTED);
+	simple_automata(node, "print", TOKEN_PRINT);
 
 	simple_automata(node, "class", TOKEN_CLASS);
 

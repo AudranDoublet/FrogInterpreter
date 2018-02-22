@@ -206,6 +206,14 @@ FrogObject *parse_single_value(tokenizer *tkz)
 	{
 		return parse_breaker(tkz, BREAK_CONTINUE);
 	}
+	else if(tkn->type == TOKEN_PRINT)
+	{
+		consume_token(tkz);
+		FrogObject *o = parse_instruction0(tkz, 0);
+		if(!o) goto error;
+
+		return CreatePrint(o);
+	}
 	else if(tkn->type == TOKEN_BREAK)
 	{
 		return parse_breaker(tkz, BREAK_BREAK);
