@@ -16,7 +16,7 @@
 #define	CODE_PUSH	0x0010
 #define CODE_POP	0x0011
 
-// Operators
+// Two operands operators
 
 #define CODE_ADD	0x0100
 #define CODE_SUB	0x0101
@@ -25,30 +25,38 @@
 #define CODE_DIVF	0x0104
 #define CODE_MOD	0x0105
 #define CODE_POW	0x0106
-#define CODE_NOT	0x0107
-#define	CODE_BWLSF	0x0108
-#define	CODE_BWRSF	0x0109
-#define CODE_BWOR	0x010a
-#define CODE_BWAND	0x010b
-#define CODE_BWXOR	0x010c
-#define CODE_BWNOT	0x010d
+#define	CODE_BWLSF	0x0107
+#define	CODE_BWRSF	0x0108
+#define CODE_BWOR	0x0109
+#define CODE_BWAND	0x010a
+#define CODE_BWXOR	0x010b
 
-// Inplace Operators
+#define CODE_CMPEQ	0x0110
+#define CODE_CMPNE	0x0111
+#define CODE_CMPLO	0x0112
+#define CODE_CMPGT	0x0113
+#define CODE_CMPLE	0x0114
+#define CODE_CMPGE	0x0115
 
-#define CODE_IADD	0x0200
-#define CODE_ISUB	0x0201
-#define CODE_IMUL	0x0202
-#define CODE_IDIV	0x0203
-#define CODE_IDIVF	0x0204
-#define CODE_IMOD	0x0205
-#define CODE_IPOW	0x0206
-#define CODE_INOT	0x0207
-#define	CODE_IBWLSF	0x0208
-#define	CODE_IBWRSF	0x0209
-#define CODE_IBWOR	0x020a
-#define CODE_IBWAND	0x020b
-#define CODE_IBWXOR	0x020c
-#define CODE_IBWNOT	0x020d
+#define CODE_IADD	0x0120
+#define CODE_ISUB	0x0121
+#define CODE_IMUL	0x0122
+#define CODE_IDIV	0x0123
+#define CODE_IDIVF	0x0124
+#define CODE_IMOD	0x0125
+#define CODE_IPOW	0x0126
+#define CODE_INOT	0x0127
+#define	CODE_IBWLSF	0x0128
+#define	CODE_IBWRSF	0x0129
+#define CODE_IBWOR	0x012a
+#define CODE_IBWAND	0x012b
+#define CODE_IBWXOR	0x012c
+#define CODE_IBWNOT	0x012d
+
+// One operand operators
+
+#define CODE_NOT	0x0200
+#define CODE_BWNOT	0x0201
 
 // Branchment
 
@@ -68,7 +76,7 @@
 
 struct stackp {
 	struct stackp  *prev;
-	long 		value[MAX];
+	void 	       *value[MAX];
 	size_t 		pos;
 };
 

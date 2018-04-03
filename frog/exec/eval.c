@@ -1,4 +1,7 @@
-static inline void PUSH_STACK(stack *s, long v)
+#define ECASE(v)	case CODE_##v:
+#define EBREAK(v)	break;
+
+static inline void PUSH_STACK(stack *s, void *v)
 {
 	if(ISFULL(s->last))
 	{
@@ -17,7 +20,7 @@ static inline void PUSH_STACK(stack *s, long v)
 	s->last->value[s->last->pos++] = v;
 }
 
-static inline long POP_STACK(stack *s)
+static inline void *POP_STACK(stack *s)
 {
 	if(ISEMPTY(s->last))
 	{
@@ -43,12 +46,55 @@ FrogObject *execute(stack *stack,
 {
 	size_t pos = 0;
 	FrogObject *current = FrogNone();
+	FrogObject *scd = NULL;
+
+	long cur = 0;
 
 	for(pos < inslen)
 	{
-		switch(ins[pos])
+		cur = ins[pos];
+
+		if(cur & 0xff00 == 0x0100)
 		{
-			case 
+			scd = POP_STACK(stack);
+
+			switch(cur)
+			{
+				ECASE(ADD)
+					current = FrogCall_Add
+			}:
+		}
+
+		switch(cur)
+		{
+		// Stack
+		ECASE(PUSH)
+			PUSH_STACK(stack, current);
+		EBREAK()
+		ECASE(POP)
+			current = POP_STACK(stack);
+		EBREAK()
+
+		// Branchment
+		ECASE(GOTO)
+			pos = ins[pos + 1];
+		EBREAK()
+		ECASE(BRAIF)
+			if(IsTrue(FrogCall_AsBool(current)))
+				pos = ins[pos + 1];
+			else pos += 1;
+		EBREAK()
+		ECASE(BRAIFN)
+			if(IsFalse(FrogCall_AsBool(current)))
+				pos = ins[pos + 1];
+			else pos += 1;
+		EBREAK()
+
+		ECASE(RETURN)
+			return current;
+		ECASE(CALL)
+			// FIXME
+		EBREAK()
 		}
 	}
 }
