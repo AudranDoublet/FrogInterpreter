@@ -1,6 +1,8 @@
 #define ECASE(v)	case CODE_##v:
 #define EBREAK(v)	break;
 
+#define OCASE(v1, v2) ECASE(v1) current = FrogCall_##v2(scd, current); EBREAK()
+
 static inline void PUSH_STACK(stack *s, void *v)
 {
 	if(ISFULL(s->last))
@@ -39,8 +41,8 @@ static inline void *POP_STACK(stack *s)
 }
 
 FrogObject *execute(stack *stack,
-		FrogObject *filememory,
-		FrogObject *funcmemory,
+		FrogObject **filememory,
+		FrogObject **funcmemory,
 		long *ins,
 		size_t inslen)
 {
@@ -60,9 +62,39 @@ FrogObject *execute(stack *stack,
 
 			switch(cur)
 			{
-				ECASE(ADD)
-					current = FrogCall_Add
-			}:
+				OCASE(ADD, Add)
+				OCASE(SUB, Sub)
+				OCASE(MUL, Mul)
+				OCASE(DIV, Div)
+				OCASE(DIVF, DivF)
+				OCASE(MOD, Mod)
+				OCASE(POW, Pow)
+				OCASE(BWLSF, LShift)
+				OCASE(BWRSF, RShift)
+				OCASE(BWOR, Or)
+				OCASE(BWAND, And)
+				OCASE(BWXOR, Xor)
+				OCASE(CMPEQ, EQ)
+				OCASE(CMPNE, NE)
+				OCASE(CMPLO, LO)
+				OCASE(CMPGT, GT)
+				OCASE(CMPLE, LE)
+				OCASE(CMPGE, GE)
+				OCASE(IADD, IAdd)
+				OCASE(ISUB, ISub)
+				OCASE(IMUL, IMul)
+				OCASE(IDIV, IDiv)
+				OCASE(IDIVF, IDivF)
+				OCASE(IMOD, IMod)
+				OCASE(IPOW, IPow)
+				OCASE(IBWLSF, ILShift)
+				OCASE(IBWRSF, IRShift)
+				OCASE(IBWOR, IOr)
+				OCASE(IBWAND, IAnd)
+				OCASE(IBWXOR, IXor)
+			}
+
+			continue;
 		}
 
 		switch(cur)
@@ -89,12 +121,59 @@ FrogObject *execute(stack *stack,
 				pos = ins[pos + 1];
 			else pos += 1;
 		EBREAK()
-
 		ECASE(RETURN)
 			return current;
+		EBREAK()
 		ECASE(CALL)
 			// FIXME
 		EBREAK()
+
+		// One operand operators
+		ECASE(NOT)
+			current = FrogCall_Not(current);
+		EBREAK()
+		ECASE(BWNOT)
+			current = FrogCall_Inv(current);
+		EBREAK()
+
+		// Getters and setters
+		ECASE(CONSTANT)
+			current = (FrogObject *) ins[++pos];
+		EBREAK()
+			// sequence
+		ECASE(SETSEQ)
+			scd = POP_STACK(stack);
+			current = FrogCall_SeqSet(POP_STACK(stack), scd, current);
+		EBREAK()
+		ECASE(GETSEQ)
+			scd = POP_STACK(stack);
+			current = FrogCall_SeqGet(scd, current);
+		EBREAK()
+			// file
+		ECASE(GETFILE)
+			current = *(filememory + ins[++pos]);
+		EBREAK()
+		ECASE(SETFILE)
+			*(filememory + ins[++pos]) = current;
+		EBREAK()
+			// func
+		ECASE(GETFUNC)
+			current = *(funcmemory + ins[++pos]);
+		EBREAK()
+		ECASE(SETFUNC)
+			*(funcmemory + ins[++pos]) = current;
+		EBREAK()
+			// sub
+		ECASE(GETSUB)
+			current = FrogCall_Get(current, (FrogObject *) ins[++pos]);
+		EBREAK()
+		ECASE(SETSUB)
+			current = FrogCall_Set(POP_STACK(stack),
+					(FrogObject *) ins[++pos], current);
+		EBREAK()
 		}
+
+		if(current == NULL)
+			return NULL;
 	}
 }

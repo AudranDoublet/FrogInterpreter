@@ -8,8 +8,8 @@
 #define CODE_GETFILE	0x0004
 #define CODE_GETSUB	0x0005
 #define CODE_SETSUB	0x0006
-#define CODE_GETARR	0x0007
-#define CODE_SETARR	0x0008
+#define CODE_GETSEQ	0x0007
+#define CODE_SETSEQ	0x0008
 
 // Stack
 
