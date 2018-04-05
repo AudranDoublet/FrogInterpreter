@@ -1,4 +1,5 @@
 #include "../frog.h"
+#include <string.h>
 
 #define UTF8_MASK1 0x1F
 #define UTF8_MASK2 0x0F
@@ -224,6 +225,81 @@ FrogObject *str_get_charat(FrogObject *o, FrogObject *b)
 	return utf32tostr(v);
 }
 
+FrogObject *str_add(FrogObject *a, FrogObject *b)
+{
+	if(ObType(b) == &str_type)
+	{
+		FrogString *s1 = (FrogString *) a;
+		FrogString *s2 = (FrogString *) b;
+
+		size_t final = s1->length + s2->length;
+		unsigned int *res = malloc(sizeof(int) * (final + 1));
+
+		if(!res)
+			return NULL;
+
+		memcpy(res, s1->str, sizeof(int) * s1->length);
+		memcpy(res + s1->length, s2->str, sizeof(int) * s2->length);
+
+		res[final] = '\0';
+
+		FrogString *fin = malloc(sizeof(FrogString));
+
+		if(!fin)
+			return NULL;
+
+		ObType(fin) = &str_type;
+		fin->length = final;
+		fin->str = res;
+		fin->hash = 0;
+
+		return (FrogObject *) fin;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+FrogObject *str_mul(FrogObject *a, FrogObject *b)
+{
+	if(ObType(b)->toint)
+	{
+		b = (*ObType(b)->toint)(b);
+	}
+	else
+	{
+		return NULL;
+	}
+
+	long v = FIValue(b);
+
+	if(v < 0) v = 0;
+	FrogString *s = (FrogString *) a;
+
+	size_t len = s->length * v;
+	unsigned int *res = malloc(sizeof(int) * (len + 1));
+
+	if(!res)
+		return NULL;
+
+	for(long i = 0; i < v; i++)
+		memcpy(res + i * s->length, s->str, sizeof(int) * s->length);
+
+	res[len] = '\0';
+	FrogString *fin = malloc(sizeof(FrogString));
+
+	if(!fin)
+		return NULL;
+
+	ObType(fin) = &str_type;
+	fin->length = len;
+	fin->str = res;
+	fin->hash = 0;
+
+	return (FrogObject *) fin;
+}
+
 size_t str_size(FrogObject *o)
 {
 	return ((FrogString *) o)->length;
@@ -233,6 +309,37 @@ FrogAsSequence str_as_sequence =
 {
 	NULL,
 	str_get_charat
+};
+
+FrogAsNumber str_as_number = {
+	str_add,
+	NULL,
+	str_mul,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };
 
 FrogType str_type = {
@@ -251,7 +358,7 @@ FrogType str_type = {
 	NULL,			// exec
 	str_scompare,		// compare
 	str_ccompare,		// compare
-	NULL,			// as number
+	&str_as_number,		// as number
 	&str_as_sequence,	// as sequence
 	NULL,			// call
 	free_str		// free

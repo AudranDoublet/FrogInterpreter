@@ -119,7 +119,7 @@ FrogObject *int_mul(FrogObject *a, FrogObject *b)
 	}
 	else
 	{
-		return NULL;
+		return FrogCall_Mul(b, a);
 	}
 
 	//fixme 
