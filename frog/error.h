@@ -44,7 +44,7 @@ void FrogErr_Syntax(int line, int column);
 
 #define FrogErr_Value(m) FrogErr_Post("ValueError", m)
 
-#define FrogErr_Memory() FrogErr_Post("MemoryError", NULL)
+#define FrogErr_Memory() FrogErr_Post("MemoryError", "Memory error");
 
 #define FrogErr_Div0() FrogErr_Post("ArithmeticError", "Division or \
 modulo by zero!")

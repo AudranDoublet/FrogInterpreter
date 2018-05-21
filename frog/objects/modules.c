@@ -50,12 +50,29 @@ void init_module_pthread(void)
 	add_bifunc("unlock_mutex", frogpthread_unlock, 1, p);
 }
 
+void init_module_sdl(void)
+{
+	FrogObject *p = create_module("sdl");
+
+	add_bifunc("Init", frogsdl_Init, 0, p);
+	add_bifunc("Quit", frogsdl_Quit, 0, p);
+	add_bifunc("CreateTexture", frogsdl_CreateTexture, 5, p);
+	add_bifunc("LoadTexture", frogsdl_LoadTexture, 1, p);
+	add_bifunc("FillTexture", frogsdl_FillTexture, 4, p);
+	add_bifunc("BlitTexture", frogsdl_BlitTexture, 4, p);
+	add_bifunc("FlushWindow", frogsdl_FlushWindow, 2, p);
+	add_bifunc("OpenWindow", frogsdl_OpenWindow, 3, p);
+	add_bifunc("WaitEvents", frogsdl_WaitEvents, 0, p);
+
+}
+
 void init_native_modules(void)
 {
 	native_modules = create_hashmap();
 
 	if(!native_modules) errx(-1, "fatal error: memory");
 	init_module_pthread();
+	init_module_sdl();
 }
 
 FrogObject *get_native_module(FrogObject *obj)

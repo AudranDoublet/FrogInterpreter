@@ -1,0 +1,39 @@
+file = include("files");
+
+class File
+{
+	function __init(this, path)
+	{
+		this.path = path;
+	}
+
+	function mkdir(this)
+	{
+
+	}
+
+	function listfiles(this)
+	{
+
+	}
+
+	function remove(this)
+	{
+
+	}
+
+	function exists(this)
+	{
+
+	}
+
+	function isDirectory(this)
+	{
+
+	}
+
+	function isFile(this)
+	{
+
+	}
+}

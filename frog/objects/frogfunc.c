@@ -84,7 +84,7 @@ FrogObject *func_call(FrogObject *o, FrogObject **args, size_t arg, stack *stack
 
 	FrogObject **memory = realloc(args, sizeof(FrogObject *) * func->memlen);
 
-	if(!memory)
+	if(!memory && func->memlen != 0)
 	{
 		FrogErr_Memory();
 		return NULL;

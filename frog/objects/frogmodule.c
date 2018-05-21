@@ -64,6 +64,7 @@ void init_builtin_functions(void)
 	add_bifunc("native", global_native, 1);
 	add_bifunc("bla", global_import, 1);
 	add_bifunc("import", global_import, 1);
+	add_bifunc("range", global_range, -1);
 	function_create_list = add_bifunc("list", global_list, -1);
 	function_create_map = add_bifunc("dict", global_dict, -1);
 	function_create_tuple = add_bifunc("tuple", global_tuple, -1);

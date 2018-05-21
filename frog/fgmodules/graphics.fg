@@ -1,0 +1,105 @@
+sdl = native("sdl");
+
+function InitGraphics()
+{
+	sdl.Init();
+}
+
+function QuitGraphics()
+{
+	sdl.Quit();
+}
+
+class Color
+{
+	function __init(this, r, g, b)
+	{
+		this.r = r;
+		this.g = g;
+		this.b = b;
+	}
+}
+
+color_black = Color(0, 0, 0);
+color_white = Color(255, 255, 255);
+
+class Window
+{
+	function __init(this, title, width, height)
+	{
+		this.title = title;
+		this.width = width;
+		this.height = height;
+	}
+
+	function CreateWindowTexture(this)
+	{
+		return CreateTexture(this.width, this.height, color_black);
+	}
+
+	function FlushWindow(this, texture)
+	{
+		sdl.FlushWindow(this.id, texture.id);
+	}
+
+	function SetWindowIcon(this, icon)
+	{
+		sdl.SetWindowIcon(icon.id);
+	}
+
+	function SetWindowTitle(this, title)
+	{
+		this.title = title;
+		sdl.SetWindowTitle(this.id, title);
+	}
+
+	function OpenWindow(this)
+	{
+		this.id = sdl.OpenWindow(this.title, this.width, this.height);
+	}
+}
+
+class Texture
+{
+	function __init(this, id)
+	{
+		this.id = id;
+	}
+
+	function FillTexture(this, color)
+	{
+		sdl.FillTexture(this.id, color.r, color.g, color.b);
+	}
+
+	function BlitTexture(this, texture, x, y)
+	{
+		sdl.BlitTexture(this.id, texture.id, x, y);
+	}
+}
+
+class Event
+{
+	function __event(this)
+	{
+
+	}
+}
+
+function WaitEvents()
+{
+	foreach(v : sdl.WaitEvents())
+	{
+		if(v == 1)
+			yield 1;
+	}
+}
+
+function CreateTexture(width, height, color)
+{
+	return Texture(sdl.CreateTexture(width, height, color.r, color.g, color.b));
+}
+
+function LoadTexture(file)
+{
+	return Texture(sdl.LoadTexture(file));
+}

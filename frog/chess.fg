@@ -1,0 +1,65 @@
+graphics = import("graphics");
+
+graphics.InitGraphics();
+pieces = include("pieces.fg");
+
+# constants
+tex_size = 55;
+
+class ChessGame
+{
+	function __init(this, w)
+	{
+		this.window = w;
+		this.board = pieces.InitPieces();
+
+		this.texture_black = graphics.LoadTexture("../chess_assets/bg_black.png");
+		this.texture_white = graphics.LoadTexture("../chess_assets/bg_white.png");
+
+		this.texture = graphics.CreateTexture(width, height, graphics.color_white);
+	}
+
+	function draw(this)
+	{
+		tex = this.texture;
+
+		foreach(x : range(8))
+		{
+			foreach(y : range(8))
+			{
+				vx, vy = x * tex_size, y * tex_size;
+
+				if(x & 1 == y & 1)
+				{
+					texture = this.texture_white;
+				}
+				else
+				{
+					texture = this.texture_black;
+				}
+
+				tex.BlitTexture(texture, vx, vy);
+				piece = this.board[x + y * 8];
+
+				if(piece)
+				{
+					tex.BlitTexture(piece.texture, vx, vy);
+				}
+			}
+		}
+
+		this.window.FlushWindow(this.texture);
+	}
+}
+
+(width, height) = (tex_size * 8, tex_size * 8);
+
+w = graphics.Window("FrogChess", width, height);
+w.OpenWindow();
+
+ChessGame(w).draw();
+
+foreach(event : graphics.WaitEvents())
+{
+	print("quit!");
+}

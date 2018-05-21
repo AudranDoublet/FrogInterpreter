@@ -12,11 +12,34 @@ int init_frog(void)
 	return 1;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
 	if(!init_frog())
 		errx(-1, "fatal error: initialization");
 
-	parse_terminal();
+	if(argc >= 2)
+	{
+		char *name = argv[1];
+		FILE *file = fopen(name, "r");
+
+		if(!file)
+		{
+			printf("Unknow file '%s'\n", name);
+			return 1;
+		}
+
+		FrogObject *obj = LoadModule(name, file);
+
+		if(!obj) return 1;
+		if(!ModuleExec(obj, create_stack()))
+		{
+			FrogErr_DebugPrint();
+		}
+	}
+	else
+	{
+		parse_terminal();
+	}
+
 	return 0;
 }

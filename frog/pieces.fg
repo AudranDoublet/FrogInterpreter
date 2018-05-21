@@ -1,0 +1,106 @@
+graphics = import("graphics");
+
+black_knight = graphics.LoadTexture("../chess_assets/knight_black.png");
+black_king = graphics.LoadTexture("../chess_assets/king_black.png");
+black_queen = graphics.LoadTexture("../chess_assets/queen_black.png");
+black_rook = graphics.LoadTexture("../chess_assets/rook_black.png");
+black_bishop = graphics.LoadTexture("../chess_assets/bishop_black.png");
+black_pawn = graphics.LoadTexture("../chess_assets/pawn_black.png");
+
+white_knight = graphics.LoadTexture("../chess_assets/knight_white.png");
+white_king = graphics.LoadTexture("../chess_assets/king_white.png");
+white_queen = graphics.LoadTexture("../chess_assets/queen_white.png");
+white_rook = graphics.LoadTexture("../chess_assets/rook_white.png");
+white_bishop = graphics.LoadTexture("../chess_assets/bishop_white.png");
+white_pawn = graphics.LoadTexture("../chess_assets/pawn_white.png");
+
+function InitPieces()
+{
+	board = [
+		Rook(black_rook),
+		Knight(black_knight),
+		Bishop(black_bishop),
+		Queen(black_queen),
+		King(black_king),
+		Bishop(black_bishop),
+		Knight(black_knight),
+		Rook(black_rook)
+	];
+
+	foreach(i : range(8))
+		board.append(Pawn(black_pawn));
+
+	board += [None] * 32;
+
+	foreach(i : range(8))
+		board.append(Pawn(white_pawn));
+
+	board += [
+		Rook(white_rook),
+		Knight(white_knight),
+		Bishop(white_bishop),
+		Queen(white_queen),
+		King(white_king),
+		Bishop(white_bishop),
+		Knight(white_knight),
+		Rook(white_rook)
+	];
+
+	return board;
+}
+
+class ChessPiece
+{
+	function __init(this, w)
+	{
+
+	}
+}
+
+class Knight extends ChessPiece
+{
+	function __init(this, texture)
+	{
+		this.texture = texture;
+	}
+}
+
+class Pawn extends ChessPiece
+{
+	function __init(this, texture)
+	{
+		this.texture = texture;
+	}
+}
+
+class Rook extends ChessPiece
+{
+	function __init(this, texture)
+	{
+		this.texture = texture;
+	}
+}
+
+class Bishop extends ChessPiece
+{
+	function __init(this, texture)
+	{
+		this.texture = texture;
+	}
+}
+
+class King extends ChessPiece
+{
+	function __init(this, texture)
+	{
+		this.texture = texture;
+	}
+}
+
+class Queen extends ChessPiece
+{
+	function __init(this, texture)
+	{
+		this.texture = texture;
+	}
+}

@@ -5,7 +5,7 @@ CC=gcc
 CPPFLAGS= -MMD #-fsanitize=address
 CFLAGS= -g -Wall -Wextra -std=c99
 LDFLAGS=
-LDLIBS=-lreadline -lpthread -lm
+LDLIBS=-lreadline -lpthread -lm -lSDL2 -lSDL2_image
  
 SRC= objects/*.c parser/*.c exec/*.c modules/*.c common/strutils.c common/hashmap.c error.c main.c
 OBJ= ${SRC:.c=.o}

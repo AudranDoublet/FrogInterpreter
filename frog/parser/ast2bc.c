@@ -393,7 +393,7 @@ static int ast2bc0(ast *tree, worker *w)
 		if(tree->childs[2])
 		{
 			pos2 = a2b_addins(w, CODE_GOTO);
-			w->ins[pos] = pos2;
+			w->ins[pos] = pos2 + 2;
 
 			pos = a2b_addins(w, 0);
 			if(!ast2bc0(tree->childs[2], w))

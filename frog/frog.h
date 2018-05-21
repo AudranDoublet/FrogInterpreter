@@ -46,6 +46,7 @@ typedef __ssize_t ssize_t; /** signed size_t **/
 #include "modules/list.h"
 #include "modules/dict.h"
 #include "modules/pthread.h"
+#include "modules/sdl.h"
 
 #include "error.h"
 
