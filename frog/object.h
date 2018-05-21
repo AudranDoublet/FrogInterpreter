@@ -12,10 +12,15 @@ typedef struct FrogType FrogType;
 #define FrogObjHead FrogObject ob_base;
 #define FrogSObjHead FrogSObject ob_base;
 
+typedef struct stack stack;
+
 typedef FrogObject *(*unaryfunction)(FrogObject *);
 typedef FrogObject *(*binaryfunction)(FrogObject *, FrogObject *);
 typedef FrogObject *(*ternaryfunction)(FrogObject *, FrogObject *, FrogObject *);
-typedef size_t (*sizefunction)(FrogObject *);
+typedef FrogObject *(*setfunction)(FrogObject *, FrogObject *, FrogObject *, binaryfunction);
+typedef FrogObject *(*callfunction)(FrogObject *, FrogObject **, size_t, stack *);
+typedef FrogObject *(*ncallfunction)(FrogObject *, stack *);
+typedef FrogObject *(*sizefunction)(FrogObject *);
 typedef int (*intfunction)(FrogObject *);
 typedef int (*biintfunction)(FrogObject *, FrogObject *);
 typedef long (*longfunction)(FrogObject *);
@@ -55,7 +60,13 @@ typedef struct {
 } FrogAsNumber;
 
 typedef struct {
-	ternaryfunction set;
+	unaryfunction init;
+	unaryfunction next;
+	unaryfunction hasnext;
+} FrogAsIterable;
+
+typedef struct {
+	setfunction set;
 	binaryfunction  get;
 } FrogAsSequence;
 
@@ -79,7 +90,7 @@ struct FrogType {
 	char *name;
 
 	binaryfunction getter;
-	ternaryfunction setter;
+	setfunction setter;
 
 	longfunction hash;
 	sizefunction size;
@@ -94,8 +105,9 @@ struct FrogType {
 
 	FrogAsNumber *as_number;
 	FrogAsSequence *as_sequence;
+	FrogAsIterable *as_iterable;
 
-	ternaryfunction call;
+	callfunction call;
 	objfunction free;
 };
 

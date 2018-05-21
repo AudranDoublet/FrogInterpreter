@@ -19,6 +19,36 @@
 #define FrogSLength(s) (((FrogString *)s)->length)
 
 FrogType str_type;
+hashmap *str_functions;
+
+static void add_bifunc(char *name, builtinfunc fc, ssize_t param)
+{
+	FrogObject *nm = utf8tostr(name);
+
+	if(!nm)
+	{
+		errx(-1, "fatal error: memory");
+	}
+
+	FrogObject *func = CreateBIFunction(nm, NULL, fc, param);	
+
+	if(!func)
+	{
+		errx(-1, "fatal error: memory");
+	}
+
+	put_hashmap(str_functions, nm, func);
+}
+
+void init_str_functions(void)
+{
+	str_functions = create_hashmap();
+
+	if(!str_functions) errx(-1, "fatal error: memory");
+
+	add_bifunc("toLowerCase", str_toLowerCase, 1);
+	add_bifunc("toUpperCase", str_toUpperCase, 1);
+}
 
 FrogObject *utf8tostr(char *str)
 {
@@ -63,7 +93,6 @@ FrogObject *utf8tostr(char *str)
 		}
 		else if( ((c1 >> 4) & 1) == 0)
 		{
-			printf("a");
 			c2 = (c1 & UTF8_MASK2) << 12;
 			UTF8_NEXT(c1, c2, 6);
 			UTF8_NEXT(c1, c2, 0);
@@ -109,7 +138,10 @@ FrogObject *utf32tostr(fchar *str)
 	FrogString *res = malloc(sizeof(FrogString));
 
 	if(!str)
+	{
+		FrogErr_Memory();
 		return NULL;
+	}
 
 	ObType(res) = &str_type;
 	ObRefcnt(res) = 0;
@@ -122,6 +154,41 @@ FrogObject *utf32tostr(fchar *str)
 		res->length++;
 
 	return (FrogObject *) res;
+}
+
+FrogObject *str2obj(fchar *str, size_t len)
+{
+	FrogString *res = malloc(sizeof(FrogString));
+
+	if(!res)
+	{
+		FrogErr_Memory();
+		return NULL;
+	}
+
+	ObType(res) = &str_type;
+	ObRefcnt(res) = 0;
+
+	res->length = len;
+	res->str = str;
+	res->hash = 0;
+
+	return (FrogObject *) res;
+}
+
+char *strtoutf8(FrogObject *obj)
+{
+	FrogString *o = (FrogString *) obj;
+	char *result = malloc(sizeof(fchar) * o->length);
+
+	if(!result)
+	{
+		FrogErr_Memory();
+		return NULL;
+	}
+
+	sprintf(result, "%ls", o->str);
+	return result;
 }
 
 void free_str(FrogObject *obj)
@@ -185,12 +252,28 @@ int str_ccompare(FrogObject *a, FrogObject *b)
 
 void str_print(FrogObject *str, FILE *file)
 {
-	fprintf(file, "'%ls'", FrogSValue(str));
+	fprintf(file, "%ls", FrogSValue(str));
 }
 
 FrogObject *str_to_str(FrogObject *obj)
 {
 	return obj;
+}
+
+FrogObject *str_nget_charat(FrogObject *o, size_t pos)
+{
+	FrogString *s = (FrogString *) o;
+	fchar *v = malloc(sizeof(fchar) * 2);
+
+	if(!v)
+	{
+		FrogErr_Memory();
+		return NULL;
+	}
+
+	*v = s->str[pos];
+	*(v + 1) = L'\0';
+	return utf32tostr(v);
 }
 
 FrogObject *str_get_charat(FrogObject *o, FrogObject *b)
@@ -212,17 +295,7 @@ FrogObject *str_get_charat(FrogObject *o, FrogObject *b)
 		return NULL;
 	}
 
-	fchar *v = malloc(sizeof(fchar) * 2);
-
-	if(!v)
-	{
-		FrogErr_Memory();
-		return NULL;
-	}
-
-	*v = s->str[pos];
-	*(v + 1) = L'\0';
-	return utf32tostr(v);
+	return str_nget_charat(o, pos);
 }
 
 FrogObject *str_add(FrogObject *a, FrogObject *b)
@@ -300,15 +373,69 @@ FrogObject *str_mul(FrogObject *a, FrogObject *b)
 	return (FrogObject *) fin;
 }
 
-size_t str_size(FrogObject *o)
+FrogObject *str_size(FrogObject *o)
 {
-	return ((FrogString *) o)->length;
+	return FromNativeInteger(((FrogString *) o)->length);
+}
+
+FrogObject *str_get(FrogObject *str, FrogObject *value)
+{
+	FrogObject *func = get_hashmap(str_functions, value);
+
+	if(!func)
+	{
+		FrogErr_SubName(str, value);
+		return NULL;
+	}
+
+	return CreateObjFunction(str, func);
+}
+
+FrogObject *str_i_init(FrogObject *o)
+{
+	FrogIter *iter = (FrogIter *) o;
+	iter->values = calloc(sizeof(void *), 2);
+
+	if(!iter->values)
+	{
+		FrogErr_Memory();
+		return NULL;
+	}
+
+	iter->values[0] = (void *) 0;
+	return o;
+}
+
+FrogObject *str_i_next(FrogObject *o)
+{
+	FrogIter *iter = (FrogIter *) o;
+
+	size_t pos = (size_t) iter->values[0];
+	iter->values[0] = (void *) (pos + 1);
+
+	return str_nget_charat(iter->base, pos);
+}
+
+FrogObject *str_i_hasnext(FrogObject *o)
+{
+	FrogIter *iter = (FrogIter *) o;
+
+	size_t pos = (size_t) iter->values[0];
+	size_t len = ((FrogString *) iter->base)->length;
+
+	return pos < len ? FrogTrue() : FrogFalse();
 }
 
 FrogAsSequence str_as_sequence =
 {
 	NULL,
 	str_get_charat
+};
+
+FrogAsIterable str_as_iterable = {
+	str_i_init,
+	str_i_next,
+	str_i_hasnext
 };
 
 FrogAsNumber str_as_number = {
@@ -348,7 +475,7 @@ FrogType str_type = {
 		NULL		// refcnt
 	}, 
 	"str",			// type name
-	NULL,			// FIXME getter
+	str_get,		// getter
 	NULL,			// setter
 	str_hash,		// hash
 	str_size,		// size
@@ -360,6 +487,7 @@ FrogType str_type = {
 	str_ccompare,		// compare
 	&str_as_number,		// as number
 	&str_as_sequence,	// as sequence
+	&str_as_iterable,
 	NULL,			// call
 	free_str		// free
 };

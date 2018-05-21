@@ -1,39 +1,22 @@
-#include <stdio.h>
 #include "frog.h"
-#include <readline/readline.h>
-#include <readline/history.h>
 
-fchar *nextline1(tokenizer *tkz)
+int init_frog(void)
 {
-	UNUSED(tkz);
+	init_builtin_functions();
+	init_str_functions();
+	init_lst_functions();
+	init_map_functions();
 
-	char *line;
-	line = readline(">>> ");
+	init_native_modules();
 
-	FrogString *str = (FrogString *) utf8tostr(line);
-	free(line);
-
-	if(str == NULL)
-	{
-		return NULL;
-	}
-
-	if(str->length == 0)
-	{
-		free(str->str);
-		free(str);
-
-		return NULL;
-	}
-
-	fchar *res = str->str;
-	free(str);
-
-	return res;
+	return 1;
 }
 
 int main(void)
 {
+	if(!init_frog())
+		errx(-1, "fatal error: initialization");
+
 	parse_terminal();
 	return 0;
 }

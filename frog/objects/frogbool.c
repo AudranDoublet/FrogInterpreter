@@ -68,6 +68,7 @@ FrogType bool_type =
 	&int_as_number,
 	NULL,
 	NULL,
+	NULL,
 	NULL
 };
 

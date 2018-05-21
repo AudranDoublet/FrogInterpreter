@@ -1,3 +1,5 @@
+#include "../frog.h"
+
 #define ECASE(v)	case CODE_##v:
 #define EBREAK(v)	break;
 
@@ -37,65 +39,44 @@ static inline void *POP_STACK(stack *s)
 		s->last = n;
 	}
 
-	return s->last->value[s->last->pos--];
+	return s->last->value[--s->last->pos];
+}
+
+stack *create_stack(void)
+{
+	stack *st = malloc(sizeof(stack));
+
+	if(!st)
+	{
+		return NULL;
+	}
+
+	st->last = NULL;
+	return st;
 }
 
 FrogObject *execute(stack *stack,
 		FrogObject **filememory,
 		FrogObject **funcmemory,
 		long *ins,
-		size_t inslen)
+		size_t inslen,
+		yieldmg *mg)
 {
-	size_t pos = 0;
+	size_t pos = mg ? mg->pos : 0, i = 0;
+	size_t len;
+
+	FrogObject **args;
 	FrogObject *current = FrogNone();
 	FrogObject *scd = NULL;
+	FrogTuple *tuple = NULL;
+
+	binaryfunction f = NULL;
 
 	long cur = 0;
 
-	for(pos < inslen)
+	for( ; pos < inslen; )
 	{
 		cur = ins[pos];
-
-		if(cur & 0xff00 == 0x0100)
-		{
-			scd = POP_STACK(stack);
-
-			switch(cur)
-			{
-				OCASE(ADD, Add)
-				OCASE(SUB, Sub)
-				OCASE(MUL, Mul)
-				OCASE(DIV, Div)
-				OCASE(DIVF, DivF)
-				OCASE(MOD, Mod)
-				OCASE(POW, Pow)
-				OCASE(BWLSF, LShift)
-				OCASE(BWRSF, RShift)
-				OCASE(BWOR, Or)
-				OCASE(BWAND, And)
-				OCASE(BWXOR, Xor)
-				OCASE(CMPEQ, EQ)
-				OCASE(CMPNE, NE)
-				OCASE(CMPLO, LO)
-				OCASE(CMPGT, GT)
-				OCASE(CMPLE, LE)
-				OCASE(CMPGE, GE)
-				OCASE(IADD, IAdd)
-				OCASE(ISUB, ISub)
-				OCASE(IMUL, IMul)
-				OCASE(IDIV, IDiv)
-				OCASE(IDIVF, IDivF)
-				OCASE(IMOD, IMod)
-				OCASE(IPOW, IPow)
-				OCASE(IBWLSF, ILShift)
-				OCASE(IBWRSF, IRShift)
-				OCASE(IBWOR, IOr)
-				OCASE(IBWAND, IAnd)
-				OCASE(IBWXOR, IXor)
-			}
-
-			continue;
-		}
 
 		switch(cur)
 		{
@@ -106,34 +87,83 @@ FrogObject *execute(stack *stack,
 		ECASE(POP)
 			current = POP_STACK(stack);
 		EBREAK()
+		ECASE(EXPLODE)
+			if(!FrogIsTuple(current))
+			{
+				FrogErr_Attribute(current, "explode");
+				return NULL;
+			}
 
+			tuple = (FrogTuple *) current;
+
+			if(tuple->length != (size_t) ins[++pos])
+			{
+				FrogErr_Post("ValueError", "Bad amount of item to explode");
+				return NULL;
+			}
+
+			for(i = tuple->length; i > 0; i--)
+			{
+				PUSH_STACK(stack, tuple->array[i - 1]);
+			}
+		EBREAK()
 		// Branchment
 		ECASE(GOTO)
 			pos = ins[pos + 1];
-		EBREAK()
+			continue;
 		ECASE(BRAIF)
 			if(IsTrue(FrogCall_AsBool(current)))
-				pos = ins[pos + 1];
-			else pos += 1;
+				pos = ins[pos + 1] - 1;
+			else pos++;
 		EBREAK()
 		ECASE(BRAIFN)
 			if(IsFalse(FrogCall_AsBool(current)))
-				pos = ins[pos + 1];
+				pos = ins[pos + 1] - 1;
 			else pos += 1;
 		EBREAK()
 		ECASE(RETURN)
+			if(mg)
+				mg->end = 1;
+			return current;
+		EBREAK()
+		ECASE(YIELD)
+			if(!mg)
+			{
+				FrogErr_Post("FatalError", "Unexcepted yield instruction");
+				return NULL;
+			}
+
+			mg->pos = pos + 1;
 			return current;
 		EBREAK()
 		ECASE(CALL)
-			// FIXME
+			len  = ins[pos + 1];
+			args = malloc(sizeof(size_t) * len);
+
+			if(len != 0 && !args)
+			{
+				FrogErr_Memory();
+				current =  NULL;
+				break;
+			}
+
+			for(size_t i = len; i > 0; i--)
+			{
+				args[i - 1] = POP_STACK(stack);
+			}
+
+			current = FrogCall_Call(current, args, len, stack);
+			pos += 1;
 		EBREAK()
 
-		// One operand operators
-		ECASE(NOT)
-			current = FrogCall_Not(current);
+		// Operators
+		ECASE(OP1)
+			current = ((unaryfunction) ins[++pos])(current);
 		EBREAK()
-		ECASE(BWNOT)
-			current = FrogCall_Inv(current);
+
+		ECASE(OP2)
+			scd = (FrogObject *) POP_STACK(stack);
+			current = ((binaryfunction) ins[++pos])(scd, current);
 		EBREAK()
 
 		// Getters and setters
@@ -143,7 +173,13 @@ FrogObject *execute(stack *stack,
 			// sequence
 		ECASE(SETSEQ)
 			scd = POP_STACK(stack);
-			current = FrogCall_SeqSet(POP_STACK(stack), scd, current);
+			current = FrogCall_SeqSet(POP_STACK(stack), scd, current,
+					(binaryfunction) ins[++pos]);
+		EBREAK()
+		ECASE(NSETSEQ)
+			scd = POP_STACK(stack);
+			current = FrogCall_SeqSet(scd, current, POP_STACK(stack),
+					(binaryfunction) ins[++pos]);
 		EBREAK()
 		ECASE(GETSEQ)
 			scd = POP_STACK(stack);
@@ -152,16 +188,53 @@ FrogObject *execute(stack *stack,
 			// file
 		ECASE(GETFILE)
 			current = *(filememory + ins[++pos]);
-		EBREAK()
-		ECASE(SETFILE)
-			*(filememory + ins[++pos]) = current;
+
+			if(!current)
+			{
+				current = FrogNone();
+			}
 		EBREAK()
 			// func
 		ECASE(GETFUNC)
 			current = *(funcmemory + ins[++pos]);
+		
+			if(!current)
+			{
+				current = FrogNone();
+			}
 		EBREAK()
 		ECASE(SETFUNC)
-			*(funcmemory + ins[++pos]) = current;
+			f = (binaryfunction) ins[pos + 2];
+
+			if(f)
+			{
+				if(*(funcmemory + ins[pos + 1]) == NULL)
+				{
+					*(funcmemory + ins[pos + 1]) = FrogNone();
+				}
+
+				current = f(*(funcmemory + ins[pos + 1]), current);
+			}
+
+			*(funcmemory + ins[pos + 1]) = current;
+			pos += 2;
+		EBREAK()
+		ECASE(NSETFUNC)
+			f = (binaryfunction) ins[pos + 2];
+			current = POP_STACK(stack);
+
+			if(f)
+			{
+				if(*(funcmemory + ins[pos + 1]) == NULL)
+				{
+					*(funcmemory + ins[pos + 1]) = FrogNone();
+				}
+
+				current = f(*(funcmemory + ins[pos + 1]), current);
+			}
+
+			*(funcmemory + ins[pos + 1]) = current;
+			pos += 2;
 		EBREAK()
 			// sub
 		ECASE(GETSUB)
@@ -169,11 +242,27 @@ FrogObject *execute(stack *stack,
 		EBREAK()
 		ECASE(SETSUB)
 			current = FrogCall_Set(POP_STACK(stack),
-					(FrogObject *) ins[++pos], current);
+					(FrogObject *) ins[pos + 1], current,
+					(binaryfunction) ins[pos + 2]);
+
+			pos += 2;
+		EBREAK()
+		ECASE(NSETSUB)
+			current = FrogCall_Set(current,
+					(FrogObject *) ins[pos + 1], POP_STACK(stack),
+					(binaryfunction) ins[pos + 2]);
+
+			pos += 2;
 		EBREAK()
 		}
 
 		if(current == NULL)
+		{
 			return NULL;
+		}
+		pos++;
 	}
+
+	if(mg) mg->end = 1;
+	return FrogNone();
 }

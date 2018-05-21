@@ -71,22 +71,17 @@
 #define TOKEN_BREAK	0x47 // break
 #define TOKEN_TRY	0x48 // try
 #define TOKEN_CATCH	0x49 // catch
-#define TOKEN_PRINT	0x4a // print
 
 // Functions instructions
 #define TOKEN_RETURN	0x50 // return
 #define TOKEN_YIELD	0x51 // yield
 #define TOKEN_FUNCTION	0x52 // func
-#define TOKEN_STATIC	0x53 // static
-#define TOKEN_ABSTRACT	0x54 // abstract
-#define TOKEN_PRIVATE	0x55 // private ?
-#define TOKEN_PROTECTED 0x56 // protected ?
 
 // Classes instruction
 #define TOKEN_CLASS	0x60
+#define TOKEN_EXTENDS	0x61
 
 //  General instructions
-#define TOKEN_INCLUDE	0x70
 #define TOKEN_OPEN	0x71 // {
 #define TOKEN_CLOSE	0x72 // }
 #define TOKEN_SOPEN	0x73 // (
@@ -95,6 +90,10 @@
 #define TOKEN_ACLOSE	0x76 // ]
 #define TOKEN_IEND	0x77 // ;
 #define TOKEN_SUB	0x78 // .
+#define TOKEN_SEP	0x79 // :
+#define TOKEN_DICT	0x7a // dict{
+
+#define TOKEN_INF	0x80 // inf
 
 #define PREFIX_NEW ">>> "
 #define PREFIX_CON "... "
@@ -128,6 +127,8 @@ struct tokenizer
 	tokeninfo *next;
 	tokeninfo *last;
 
+	int linenb, colnb;
+	int need_semicolon;
 	char *prefix;
 };
 

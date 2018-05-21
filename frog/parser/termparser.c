@@ -67,34 +67,33 @@ static fchar *nextline_terminal(tokenizer *tkz)
 	}
 }
 
-void safe_environment(FrogObject *env)
-{
-	FrogEnv *e = (FrogEnv *) env;
-
-	if(e->breaktype != BREAK_NONE)
-	{
-		switch(e->breaktype)
-		{
-			case BREAK_BREAK:
-				FrogErr_Post("SyntaxError", "break outside a loop");
-				break;
-			case BREAK_CONTINUE:
-				FrogErr_Post("SyntaxError", "continue outside a loop");
-				break;
-			case BREAK_RETURN:
-				FrogErr_Post("SyntaxError", "return outside a function");
-				break;
-		}
-
-		e->breaktype = BREAK_NONE;
-	}
-}
-
 void parse_terminal(void)
 {
 	//signal(SIGINT, kill_handler);
 	tokenizer *tkz = create_tokenizer(nextline_terminal, NULL);
-	FrogObject *env = CreateEnvironment(NULL);
+	worker *w = malloc(sizeof(worker));
+	FrogObject **filememory = NULL;
+	stack *st = create_stack();
+
+	FrogModule *module = (FrogModule *) EmptyModule("stdin");
+
+	if(!w || !st || !module)
+		return;
+
+	w->loop_start = NULL;
+	w->lstack = NULL;
+	w->file = module->name2var;
+	w->func = w->file;
+	w->waiting = NULL;
+	w->ins = NULL;
+	w->size = 0;
+	w->capacity = 0;
+	w->module = (FrogObject *) module;
+	w->yield = -1;
+
+	FrogObject *res = NULL;
+
+	filememory = module->memory;
 
 	if(!tkz)
 	{
@@ -106,23 +105,32 @@ void parse_terminal(void)
 	{
 		tkz->prefix = tkz->linepos ? PREFIX_CON : PREFIX_NEW;
 
-		FrogObject *v = parse_instruction(tkz);
+		ast *v = parse_instruction(tkz);
 
 		if(v)
 		{
-			v = FrogCall_Exec(env, v);
-			v = GetHybrid(v);
+			if(!ast2bc(v, w))
+				puts("oups");
 
-			if(v)
+			filememory = realloc(filememory, sizeof(FrogObject *) * w->file->size);
+			module->memory = filememory;
+
+			if(!filememory)
+				return;
+
+			res = execute(st, filememory, filememory, w->ins, w->size, NULL);
+
+			if(!res)
 			{
-				Frog_Print(v, stdout);
-				printf("\n");
-			}
-			else
-			{
-				safe_environment(env);
 				FrogErr_DebugPrint();
+				//Frog_Print(FrogErr_Get(), stdout);
 			}
+
+			free(w->ins);
+
+			w->ins = NULL;
+			w->size = 0;
+			w->capacity = 0;
 		}
 		else if(!tkz->eof)
 		{

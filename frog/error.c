@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include "frog.h"
 
-static char buffer[1024];
-static FrogObject *error = NULL;
+_Thread_local static char buffer[1024];
+_Thread_local static FrogObject *error = NULL;
 
 static FrogObject *create_error(char *name, char *message)
 {
@@ -10,10 +10,7 @@ static FrogObject *create_error(char *name, char *message)
 
 	if(err == NULL)
 	{
-		// not enough memory to create an error...
-		//TODO better handling ?
-		printf("out of memory");
-		exit(-1);
+		errx(-1, "fatal error: out of memory");
 	}
 
 	err->name = utf8tostr(name);
@@ -54,9 +51,42 @@ void FrogErr_Attribute(FrogObject *a, char *type)
 	FrogErr_Post("AttributeError", buffer);
 }
 
+void FrogErr_Key(FrogObject *a)
+{
+	sprintf(buffer, "%ls", ((FrogString *) a)->str);
+	FrogErr_Post("KeyError", buffer);
+}
+
+
 void FrogErr_Name(FrogObject *a)
 {
 	sprintf(buffer, "'%ls' not defined", ((FrogString *) a)->str);
+	FrogErr_Post("NameError", buffer);
+}
+
+void FrogErr_ClassName(FrogObject *a)
+{
+	sprintf(buffer, "class '%ls' not defined", ((FrogString *) a)->str);
+	FrogErr_Post("NameError", buffer);
+}
+
+void FrogErr_SubName(FrogObject *obj, FrogObject *s)
+{
+	FrogString *obstr = (FrogString *) Frog_ToString(obj);
+
+	sprintf(buffer, "'%ls' has no attribute '%ls'", obstr->str, ((FrogString *) s)->str);
+	FrogErr_Post("AttributeError", buffer);
+}
+
+void FrogErr_InstanceName(char *name)
+{
+	sprintf(buffer, "this instance has no attribute '%s'", name);
+	FrogErr_Post("AttributeError", buffer);
+}
+
+void FrogErr_Module(FrogObject *a)
+{
+	sprintf(buffer, "'%ls' module can't be found", ((FrogString *) a)->str);
 	FrogErr_Post("NameError", buffer);
 }
 
@@ -69,4 +99,28 @@ void FrogErr_Operator(FrogObject *a, FrogObject *b, char *op)
 	else sprintf(buffer, "%s not supported between '%s' and '%s'",op, 
 		ObType(a)->name, ObType(b)->name);
 	FrogErr_Post("TypeError", buffer);
+}
+
+void FrogErr_BadArgCount(FrogObject *func, size_t good_count, size_t bad_count)
+{
+	FrogString *str = (FrogString *) Frog_ToString(func);
+	sprintf(buffer, "%ls need %zu arguments but %zu were given.",
+		str->str, good_count, bad_count);
+
+	FrogErr_Post("CallError", buffer);
+}
+
+void FrogErr_BadArgCountS(char *s, size_t good_count, size_t bad_count)
+{
+	sprintf(buffer, "%s need %zu arguments but %zu were given.",
+		s, good_count, bad_count);
+
+	FrogErr_Post("CallError", buffer);
+}
+
+
+void FrogErr_Syntax(int line, int col)
+{
+	sprintf(buffer, "Unexcepted character at line %i, column %i.", line, col);
+	FrogErr_Post("SyntaxError", buffer);
 }

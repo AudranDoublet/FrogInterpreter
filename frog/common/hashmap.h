@@ -2,7 +2,8 @@
 #define __HASH_MAP_H__
 struct entry_s
 {
-	FrogObject *key, *value;
+	FrogObject *key;
+	void *value;
 	long hash;
 	struct entry_s *next;
 };
@@ -14,13 +15,15 @@ typedef struct
 	struct entry_s **entries;	
 } hashmap;
 
-hashmap *create_hashmap();
+hashmap *create_hashmap(void);
 
-int put_hashmap(hashmap *map, FrogObject *key, FrogObject *value);
+hashmap *copy_hashmap(hashmap *map);
 
-FrogObject *get_hashmap(hashmap *map, FrogObject *key);
+int put_hashmap(hashmap *map, FrogObject *key, void *value);
 
-FrogObject *remove_hashmap(hashmap *map, FrogObject *key);
+void *get_hashmap(hashmap *map, FrogObject *key);
+
+void *remove_hashmap(hashmap *map, FrogObject *key);
 
 void clear_hashmap(hashmap *map);
 

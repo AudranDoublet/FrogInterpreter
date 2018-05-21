@@ -70,8 +70,8 @@ void *operator_function[] =
 	FrogCall_And,
 	FrogCall_Xor,
 	FrogCall_Inv,
-	NULL,
-	NULL,
+	NULL, // ,
+	NULL, // =
 	FrogCall_IAdd,
 	FrogCall_ISub,
 	FrogCall_IMul,
@@ -122,7 +122,120 @@ static inline int operator_type(int priority)
 	return priority_type[priority];
 }
 
-FrogObject *create_call(int type, FrogObject *a, FrogObject *b)
+ast **create_args0(tokenizer *tkz, int pos)
+{
+	ast *cur = parse_value(tkz, 11);
+
+	if(!cur)
+	{
+		return NULL;
+	}
+
+	ast **res = NULL;
+
+	if(current_token(tkz)->type == TOKEN_COMMA)
+	{
+		consume_token(tkz);
+		res = create_args0(tkz, pos + 1);
+	}
+	else
+	{
+		res = calloc(sizeof(FrogObject *), (pos + 2));
+	}
+
+	if(!res)
+		return NULL;
+
+	res[pos] = cur;
+	return res;
+
+}
+
+ast **create_args(tokenizer *tkz, int close)
+{
+	tokeninfo *tkn = current_token(tkz);
+
+	if(tkn->type == close)
+	{
+		consume_token(tkz);
+		return calloc(sizeof(ast *), 1);
+	}
+
+	ast **res = create_args0(tkz, 0);
+
+	if(!res) return NULL;
+
+	if(!eat_token(tkz, close))
+	{
+		free(res);
+		return NULL;
+	}
+
+	return res;
+}
+
+ast **create_bargs0(tokenizer *tkz, int pos)
+{
+	ast *cur = parse_value(tkz, 11);
+
+	if(!cur)
+	{
+		return NULL;
+	}
+
+	ast *val = NULL;
+
+	if(!eat_token(tkz, TOKEN_SEP) || !(val = parse_value(tkz, 11)))
+	{
+		return NULL;
+	}
+
+	ast **res = NULL;
+
+	if(current_token(tkz)->type == TOKEN_COMMA)
+	{
+		consume_token(tkz);
+		res = create_bargs0(tkz, pos + 1);
+	}
+	else
+	{
+		res = calloc(sizeof(FrogObject *), (pos + 1) * 2 + 1);
+	}
+
+	if(!res)
+		return NULL;
+
+	res[pos * 2] = cur;
+	res[pos * 2 + 1] = val;
+
+	return res;
+
+}
+
+ast **create_bargs(tokenizer *tkz, int close)
+{
+	tokeninfo *tkn = current_token(tkz);
+
+	if(tkn->type == close)
+	{
+		consume_token(tkz);
+		return calloc(sizeof(ast *), 1);
+	}
+
+	ast **res = create_bargs0(tkz, 0);
+
+	if(!res) return NULL;
+
+	if(!eat_token(tkz, close))
+	{
+		free(res);
+		return NULL;
+	}
+
+	return res;
+}
+
+ast *create_call(int type, ast *a, ast *b)
 {
 	void *func = operator_function[type];
 
@@ -131,23 +244,38 @@ FrogObject *create_call(int type, FrogObject *a, FrogObject *b)
 	else if(b == NULL && type == TOKEN_OPTMIN)
 		func = FrogCall_Neg;
 
-	return CreateCaller(operator_assign[type], func, a, b, NULL);
+	if(operator_assign[type])
+	{
+		return ast_assign(func, a, b);
+	}
+	else if(b == NULL)
+	{
+		return ast_op1(func, a);
+	}
+
+	return ast_op2(func, a, b);
 }
 
-FrogObject *parse_single_value(tokenizer *tkz)
+ast *parse_single_value(tokenizer *tkz)
 {
 	tokeninfo *tkn = current_token(tkz);
-	FrogObject *base = NULL;
+	ast *base = NULL;
 
 	if(tkn->type == TOKEN_INTEGER
-		|| tkn->type == TOKEN_STRING)
+		|| tkn->type == TOKEN_STRING
+		|| tkn->type == TOKEN_DECIMAL)
 	{
-		base = tkn->value;
+		base = ast_constant(tkn->value);
+		consume_token(tkz);
+	}
+	else if(tkn->type == TOKEN_INF)
+	{
+		base = ast_constant(FromNativeFloat(INFINITY));
 		consume_token(tkz);
 	}
 	else if(tkn->type == TOKEN_ID)
 	{
-		base = CreateHybrid(NULL, tkn->value, 1);
+		base = ast_var(tkn->value);
 		consume_token(tkz);
 	}
 	else if(tkn->type == TOKEN_SOPEN)
@@ -160,17 +288,17 @@ FrogObject *parse_single_value(tokenizer *tkz)
 	}
 	else if(tkn->type == TOKEN_NONE)
 	{
-		base = FrogNone();
+		base = ast_constant(FrogNone());
 		consume_token(tkz);
 	}
 	else if(tkn->type == TOKEN_TRUE)
 	{
-		base = FrogTrue();
+		base = ast_constant(FrogTrue());
 		consume_token(tkz);
 	}
 	else if(tkn->type == TOKEN_FALSE)
 	{
-		base = FrogFalse();
+		base = ast_constant(FrogFalse());
 		consume_token(tkz);
 	}
 	else if(tkn->type == TOKEN_IF)
@@ -179,46 +307,92 @@ FrogObject *parse_single_value(tokenizer *tkz)
 	}
 	else if(tkn->type == TOKEN_OPEN)
 	{
-		base = CreateBlock();
+		base = NULL;
 		consume_token(tkz);
 
-		if(!base) goto error;
 		tkn = current_token(tkz);
 
 		while(tkn->type >= 0 && tkn->type != TOKEN_CLOSE)
 		{
-			FrogObject *nxt = parse_instruction(tkz);
+			ast *nxt = parse_instruction(tkz);
 			if(!nxt)
 			{
-				Frog_Free(base);
 				goto error;
 			}
 
-			AddBlockElement(base, nxt);
+			if(!base)
+			{
+				base = nxt;
+			}
+			else
+			{
+				base = ast_create2(AST_NEXT, base, nxt);
+			}
+
 			tkn = current_token(tkz);
 		}
+
+		if(!base) base = ast_empty();
+
+		consume_token(tkz);
+		tkz->need_semicolon = 0;
+		return base;
 	}
 	else if(tkn->type == TOKEN_WHILE)
 	{
 		base = parse_while(tkz);
 	}
+	else if(tkn->type == TOKEN_FOREACH)
+	{
+		base = parse_foreach(tkz);
+	}
 	else if(tkn->type == TOKEN_CONTINUE)
 	{
-		return parse_breaker(tkz, BREAK_CONTINUE);
+		return parse_breaker(tkz, AST_CONTINUE);
 	}
-	else if(tkn->type == TOKEN_PRINT)
+	else if(tkn->type == TOKEN_RETURN)
 	{
-		consume_token(tkz);
-		FrogObject *o = parse_instruction0(tkz, 0);
-		if(!o) goto error;
-
-		return CreatePrint(o);
+		return parse_breaker(tkz, AST_RETURN);
+	}
+	else if(tkn->type == TOKEN_YIELD)
+	{
+		return parse_breaker(tkz, AST_YIELD);
 	}
 	else if(tkn->type == TOKEN_BREAK)
 	{
-		return parse_breaker(tkz, BREAK_BREAK);
+		return parse_breaker(tkz, AST_BREAK);
 	}
-	//FIXME liste, map
+	else if(tkn->type == TOKEN_FUNCTION)
+	{
+		return parse_function(tkz);
+	}
+	else if(tkn->type == TOKEN_EOF)
+	{
+		tkz->need_semicolon = 0;
+		return ast_empty();
+	}
+	else if(tkn->type == TOKEN_CLASS)
+	{
+		return parse_class(tkz);
+	}
+	else if(tkn->type == TOKEN_AOPEN)
+	{
+		consume_token(tkz);
+		ast **args = create_args(tkz, TOKEN_ACLOSE);
+
+		if(!args) return NULL;
+		base = ast_create2(AST_CALL, ast_constant(function_create_list), args);
+	}
+	else if(tkn->type == TOKEN_DICT)
+	{
+		consume_token(tkz);
+		ast **args = create_bargs(tkz, TOKEN_CLOSE);
+
+		if(!args) return NULL;
+		base = ast_create2(AST_CALL, ast_constant(function_create_map), args);
+	}
+
+	//FIXME map
 
 	if(!base)
 	{
@@ -231,21 +405,33 @@ FrogObject *parse_single_value(tokenizer *tkz)
 
 		if(tkn->type == TOKEN_SUB)
 		{
+			consume_token(tkz);
+			tkn = current_token(tkz);
 
+			if(tkn->type != TOKEN_ID)
+				return NULL;
+
+			base = ast_create2(AST_SUBVAR, base, tkn->value);
 		}
 		else if(tkn->type == TOKEN_SOPEN)
 		{
+			consume_token(tkz);
+			ast **args = create_args(tkz, TOKEN_SCLOSE);
 
+			if(!args)
+				return NULL;
+
+			base = ast_create2(AST_CALL, base, args);
 		}
 		else if(tkn->type == TOKEN_AOPEN)
 		{
 			consume_token(tkz);
-			FrogObject *obj = parse_value(tkz, MAX_PRIORITY);
+			ast *obj = parse_value(tkz, MAX_PRIORITY);
 
 			if(!obj || !eat_token(tkz, TOKEN_ACLOSE))
 				return NULL;
 
-			base = CreateHybrid(base, obj, 2);
+			base = ast_subarr(base, obj);
 		}
 		else
 		{
@@ -258,10 +444,10 @@ FrogObject *parse_single_value(tokenizer *tkz)
 error:	return NULL;
 }
 
-FrogObject *recursive_tree(tokenizer *tkz, int priority)
+ast *recursive_tree(tokenizer *tkz, int priority)
 {
 	tokeninfo *tkn;
-	FrogObject *a, *b;
+	ast *a, *b;
 	int type;
 
 	a = parse_value(tkz, priority - 1);
@@ -282,10 +468,10 @@ error:
 	return NULL;
 }
 
-FrogObject *parse_value(tokenizer *tkz, int priority)
+ast *parse_value(tokenizer *tkz, int priority)
 {
 	tokeninfo *tkn;
-	FrogObject *a, *b;
+	ast *a, *b;
 	int type;
 	int ptype = operator_type(priority);
 	int p;
@@ -319,6 +505,16 @@ FrogObject *parse_value(tokenizer *tkz, int priority)
 		a = parse_value(tkz, priority - 1);
 		if(!a) goto error;
 
+		if(priority == 12 && current_token(tkz)->type == TOKEN_COMMA)
+		{
+			consume_token(tkz);
+			ast **res = create_args0(tkz, 1);
+			if(!res) goto error;
+
+			res[0] = a;
+			return ast_create1(AST_TUPLE, res);
+		}
+
 		while(operator_priority(current_token(tkz)) == priority)
 		{
 			type = current_token(tkz)->type;
@@ -345,31 +541,31 @@ void token_error(tokenizer *tkz)
 	FrogErr_Post("SyntaxError", "FIXME");
 }
 
-FrogObject *parse_breaker(tokenizer *tkz, int type)
+ast *parse_breaker(tokenizer *tkz, int type)
 {
 	consume_token(tkz);
-	FrogObject *o = parse_instruction0(tkz, 0);
+	ast *o = parse_instruction0(tkz, 0);
 	if(!o) return NULL;
-	
-	return CreateBreaker(type, o);
+
+	return ast_create1(type, o);
 }
 
-FrogObject *parse_if(tokenizer *tkz)
+ast *parse_if(tokenizer *tkz)
 {
 	if(!eat_token(tkz, TOKEN_IF) || !eat_token(tkz, TOKEN_SOPEN))
 		return NULL;
 
-	FrogObject *condition = parse_instruction0(tkz, 2);
+	ast *condition = parse_instruction0(tkz, 2);
 
 	if(!condition || !eat_token(tkz, TOKEN_SCLOSE))
 		return NULL;
 
-	FrogObject *thenBlock = parse_instruction(tkz);
+	ast *thenBlock = parse_instruction(tkz);
 
 	if(!thenBlock)
 		return NULL;
 
-	FrogObject *elseBlock = NULL;
+	ast *elseBlock = NULL;
 	
 	if(current_token(tkz)->type == TOKEN_ELSE)
 	{
@@ -380,30 +576,181 @@ FrogObject *parse_if(tokenizer *tkz)
 			return NULL;
 	}
 
-	return CreateCondition(condition, thenBlock, elseBlock);
+	return ast_create3(AST_IF, condition, thenBlock, elseBlock);
 }
 
-FrogObject *parse_while(tokenizer *tkz)
+ast *parse_while(tokenizer *tkz)
 {
 	if(!eat_token(tkz, TOKEN_WHILE) || !eat_token(tkz, TOKEN_SOPEN))
 		return NULL;
 
-	FrogObject *condition = parse_instruction0(tkz, 2);
+	ast *condition = parse_instruction0(tkz, 2);
 
 	if(!condition || !eat_token(tkz, TOKEN_SCLOSE))
 		return NULL;
 
-	FrogObject *block = parse_instruction(tkz);
+	ast *block = parse_instruction(tkz);
 
 	if(!block)
 		return NULL;
 
-	return CreateWhile(0, condition, block);
+	return ast_create2(AST_WHILE, condition, block);
 }
 
-FrogObject *parse_instruction0(tokenizer *tkz, int iend)
+ast *parse_foreach(tokenizer *tkz)
 {
-	FrogObject *obj;
+	if(!eat_token(tkz, TOKEN_FOREACH) || !eat_token(tkz, TOKEN_SOPEN))
+		return NULL;
+
+	ast *var = parse_instruction0(tkz, 2);
+
+	if(!var || !eat_token(tkz, TOKEN_SEP))
+		return NULL;
+
+	ast *iter = parse_instruction0(tkz, 2);
+
+	if(!iter || !eat_token(tkz, TOKEN_SCLOSE))
+		return NULL;
+
+	ast *block = parse_instruction(tkz);
+
+	if(!block)
+		return NULL;
+
+	return ast_create3(AST_FOREACH, var, iter, block);
+}
+
+FrogObject **arguments(tokenizer *tkz, int pos)
+{
+	tokeninfo *tkn = current_token(tkz);
+	FrogObject *id = tkn->value;
+
+	if(tkn->type != TOKEN_ID)
+	{
+		return NULL;
+	}
+
+	consume_token(tkz);
+	FrogObject **res = NULL;
+
+	if(current_token(tkz)->type == TOKEN_COMMA)
+	{
+		consume_token(tkz);
+		res = arguments(tkz, pos + 1);
+	}
+	else
+	{
+		res = calloc(sizeof(FrogObject *), (pos + 2));
+	}
+
+	if(!res)
+		return NULL;
+
+	res[pos] = id;
+	return res;
+}
+
+ast *parse_function(tokenizer *tkz)
+{
+	if(!eat_token(tkz, TOKEN_FUNCTION))
+		return NULL;
+
+	FrogObject *id = NULL;
+
+	if(current_token(tkz)->type == TOKEN_ID)
+	{
+		id = current_token(tkz)->value;
+		consume_token(tkz);
+	}
+
+	if(!eat_token(tkz, TOKEN_SOPEN))
+		return NULL;
+
+	FrogObject **args;
+
+	if(current_token(tkz)->type == TOKEN_SCLOSE)
+	{
+		args = calloc(sizeof(FrogObject *), 1);
+	}
+	else args = arguments(tkz, 0);
+
+	if(!args)
+		return NULL;
+
+	if(!eat_token(tkz, TOKEN_SCLOSE))
+		return NULL;
+
+	ast *block = parse_instruction(tkz);
+
+	if(!block)
+		return NULL;
+
+	return ast_create3(AST_FUNC, id, args, block);
+}
+
+static ast **parse_functions(tokenizer *tkz, int pos)
+{
+	tokeninfo *tkn = current_token(tkz);
+
+	if(tkn->type != TOKEN_FUNCTION)
+	{
+		return tkn->type != TOKEN_CLOSE ? NULL
+				: calloc(sizeof(ast *), pos + 1);
+	}
+
+	ast *func = parse_function(tkz);
+	if(!func) return NULL;
+
+	ast **res = parse_functions(tkz, pos + 1);
+	if(!res) return NULL;
+
+	res[pos] = func;
+	return res;
+}
+
+ast *parse_class(tokenizer *tkz)
+{
+	if(!eat_token(tkz, TOKEN_CLASS))
+	{
+		return NULL;
+	}
+
+	FrogObject *name = NULL, *parent = NULL;
+	tokeninfo *tkn = current_token(tkz);
+
+	if(tkn->type == TOKEN_ID)
+	{
+		name = tkn->value;
+		consume_token(tkz);
+		tkn = current_token(tkz);
+	}
+
+	if(tkn->type == TOKEN_EXTENDS)
+	{
+		consume_token(tkz);
+		tkn = current_token(tkz);
+
+		if(tkn->type != TOKEN_ID)
+			return NULL;
+
+		parent = tkn->value;
+		consume_token(tkz);
+	}
+
+	if(!eat_token(tkz, TOKEN_OPEN))
+		return NULL;
+
+	ast **funcs = parse_functions(tkz, 0);
+
+	if(!funcs || !eat_token(tkz, TOKEN_CLOSE))
+		return NULL;
+
+	return ast_create3(AST_CLASS, name, parent, funcs);
+}
+
+ast *parse_instruction0(tokenizer *tkz, int iend)
+{
+	ast *obj;
 	int current = current_token(tkz)->type;
 
 	switch(current)
@@ -414,23 +761,26 @@ FrogObject *parse_instruction0(tokenizer *tkz, int iend)
 				token_error(tkz);
 				return NULL;
 			}
+			tkz->need_semicolon = 0;
 
 			consume_token(tkz);
-			return FrogNone();
+			return ast_empty();
 		default:
-			obj = parse_value(tkz, MAX_PRIORITY); //FIXME condition, ect
+			tkz->need_semicolon = 1;
+			obj = parse_value(tkz, MAX_PRIORITY);
 
-			if(iend == 1)
+			if(obj && iend == 1 && tkz->need_semicolon)
 			{
 				if(is_iend(tkz))
 					consume_token(tkz);
 			}
 
+			tkz->need_semicolon = 0;
 			return obj;
 	}
 }
 
-FrogObject *parse_instruction(tokenizer *tkz)
+ast *parse_instruction(tokenizer *tkz)
 {
 	return parse_instruction0(tkz, 1);
 }

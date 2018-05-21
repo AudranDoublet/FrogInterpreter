@@ -1,15 +1,8 @@
-typedef struct {
-	FrogObjHead
-	FrogObject *a, *b, *c;
-	void *func;
-	int assignation; // boolean: assignation ?
-} FrogObjectCaller;
-
-FrogObject *CreateCaller(int assignation, void *func, FrogObject *a, FrogObject *b, FrogObject *c);
-
 void Frog_Free(FrogObject *v);
 
 FrogObject *Frog_ToString(FrogObject *a);
+
+FrogObject *Frog_Len(FrogObject *a);
 
 int Frog_Print(FrogObject *a, FILE *out);
 
@@ -24,6 +17,8 @@ FrogObject *FrogCall_Exec(FrogObject *env, FrogObject *a);
 FrogObject *FrogCall_EQ(FrogObject *a, FrogObject *b);
 
 FrogObject *FrogCall_NE(FrogObject *a, FrogObject *b);
+
+int FrogCall_Compare(FrogObject *a, FrogObject *b);
 
 FrogObject *FrogCall_LO(FrogObject *a, FrogObject *b);
 
@@ -97,10 +92,16 @@ FrogObject *FrogCall_IXor(FrogObject *a, FrogObject *b);
 
 FrogObject *FrogCall_Get(FrogObject *a, FrogObject *b);
 
-FrogObject *FrogCall_Set(FrogObject *a, FrogObject *b, FrogObject *c);
+FrogObject *FrogCall_Set(FrogObject *a, FrogObject *b, FrogObject *c, binaryfunction f);
 
 FrogObject *FrogCall_SeqGet(FrogObject *a, FrogObject *b);
 
-FrogObject *FrogCall_SeqSet(FrogObject *a, FrogObject *b, FrogObject *c);
+FrogObject *FrogCall_SeqSet(FrogObject *a, FrogObject *b, FrogObject *c, binaryfunction f);
 
-FrogObject *FrogCall_Call(FrogObject *a, FrogObject *b, FrogObject *c);
+FrogObject *FrogCall_Call(FrogObject *func, FrogObject **args, size_t len, stack *stack);
+
+FrogObject *FrogCall_IterInit(FrogObject *a);
+
+FrogObject *FrogCall_IterHasNext(FrogObject *a);
+
+FrogObject *FrogCall_IterNext(FrogObject *a);

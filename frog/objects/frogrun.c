@@ -25,6 +25,17 @@ FrogObject *Frog_ToString(FrogObject *a)
 	return NULL;
 }
 
+FrogObject *Frog_Len(FrogObject *a)
+{
+	if(ObType(a)->size)
+	{
+		return (*ObType(a)->size)(a);
+	}
+
+	FrogErr_Type("'%ls' has no len()", a);
+	return NULL;
+}
+
 int Frog_Print(FrogObject *a, FILE *out)
 {
 	if(ObType(a)->print)
@@ -56,15 +67,24 @@ long Frog_Hash(FrogObject *a)
 
 FrogObject *FrogCall_AsBool(FrogObject *o)
 {
-	int res = 0;
+	int res = 1;
 
 	if(ObType(o)->toint)
 	{
 		res = FIValue((*ObType(o)->toint)(o));
 	}
+	else if(IsNone(o))
+	{
+		res = 0;
+	}
 	else if(ObType(o)->size)
 	{
-		res = (*ObType(o)->size)(o);
+		FrogObject *ob = (*ObType(o)->size)(o);
+
+		if(ob)
+		{
+			res = FIValue(ob);
+		}
 	}
 
 	return res ? FrogTrue() : FrogFalse();
@@ -77,6 +97,8 @@ FrogObject *FrogCall_Not(FrogObject *o)
 
 FrogObject *FrogCall_EQ(FrogObject *a, FrogObject *b)
 {
+	if(a == b) return FrogTrue();
+
 	int res = -1;
 
 	if(ObType(a)->simple_compare)
@@ -89,7 +111,6 @@ FrogObject *FrogCall_EQ(FrogObject *a, FrogObject *b)
 	else if(res == 0)
 		return FrogFalse();
 	
-	FrogErr_Operator(a, b, "==");
 	return NULL;
 }
 
@@ -106,9 +127,26 @@ FrogObject *FrogCall_NE(FrogObject *a, FrogObject *b)
 		return FrogTrue();
 	else if(res == 1)
 		return FrogFalse();
-	
-	FrogErr_Operator(a, b, "!=");
+
 	return NULL;
+}
+
+int FrogCall_Compare(FrogObject *a, FrogObject *b)
+{
+	int res = -2;
+
+	if(ObType(a)->complex_compare)
+	{
+		res = (*ObType(a)->complex_compare)(a, b);
+	}
+
+	if(res == -2)
+	{
+		FrogErr_Operator(a, b, "compare");
+		return -2;
+	}
+
+	return res;
 }
 
 FrogObject *FrogCall_LO(FrogObject *a, FrogObject *b)
@@ -572,12 +610,12 @@ FrogObject *FrogCall_Get(FrogObject *a, FrogObject *b)
 	return res;
 }
 
-FrogObject *FrogCall_Set(FrogObject *a, FrogObject *b, FrogObject *c)
+FrogObject *FrogCall_Set(FrogObject *a, FrogObject *b, FrogObject *c, binaryfunction f)
 {
 	FrogType *type = ObType(a);
 	FrogObject *res;
 
-	if(!type->setter || !(res = (*type->setter)(a, b, c)))
+	if(!type->setter || !(res = (*type->setter)(a, b, c, f)))
 	{
 		FrogErr_Attribute(a, "set");
 		return NULL;
@@ -599,7 +637,7 @@ FrogObject *FrogCall_SeqGet(FrogObject *a, FrogObject *b)
 	return (*type->get)(a, b);
 }
 
-FrogObject *FrogCall_SeqSet(FrogObject *a, FrogObject *b, FrogObject *c)
+FrogObject *FrogCall_SeqSet(FrogObject *a, FrogObject *b, FrogObject *c, binaryfunction f)
 {
 	FrogAsSequence *type = ObType(a)->as_sequence;
 
@@ -609,13 +647,48 @@ FrogObject *FrogCall_SeqSet(FrogObject *a, FrogObject *b, FrogObject *c)
 		return NULL;
 	}
 
-	return (*type->set)(a, b, c);
+	return (*type->set)(a, b, c, f);
 }
 
-FrogObject *FrogCall_Call(FrogObject *a, FrogObject *b, FrogObject *c)
+FrogObject *FrogCall_Call(FrogObject *func, FrogObject **args, size_t len, stack *st)
 {
-	UNUSED(a);
-	UNUSED(b);
-	UNUSED(c);//FIXME
-	return NULL;
+	callfunction call = ObType(func)->call;
+
+	if(!call)
+	{
+		FrogErr_Attribute(func, "call");
+		return NULL;
+	}
+
+	return call(func, args, len, st);
+}
+
+FrogObject *FrogCall_IterInit(FrogObject *a)
+{
+	if(!FrogIsIter(a))
+	{
+		if(!ObType(a)->as_iterable)
+		{
+			FrogErr_Attribute(a, "iter");
+			return NULL;
+		}
+
+		a = CreateIterable(a);
+		if(!a) return NULL;
+	}
+
+	FrogIter *iter = (FrogIter *) a;
+	return (iter->iterable->init)(a);
+}
+
+FrogObject *FrogCall_IterHasNext(FrogObject *a)
+{
+	FrogIter *iter = (FrogIter *) a;
+	return (iter->iterable->hasnext)(a);
+}
+
+FrogObject *FrogCall_IterNext(FrogObject *a)
+{
+	FrogIter *iter = (FrogIter *) a;
+	return (iter->iterable->next)(a);
 }

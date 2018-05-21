@@ -85,6 +85,11 @@ int int_ccompare(FrogObject *a, FrogObject *b)
 
 FrogObject *int_add(FrogObject *a, FrogObject *b)
 {
+	if(FrogIsFloat(b))
+	{
+		return FrogCall_Add(FromNativeFloat(FIValue(a)), b);
+	}
+
 	if(ObType(b)->toint)
 	{
 		b = (*ObType(b)->toint)(b);
@@ -99,6 +104,11 @@ FrogObject *int_add(FrogObject *a, FrogObject *b)
 
 FrogObject *int_sub(FrogObject *a, FrogObject *b)
 {
+	if(FrogIsFloat(b))
+	{
+		return FrogCall_Sub(FromNativeFloat(FIValue(a)), b);
+	}
+
 	if(ObType(b)->toint)
 	{
 		b = (*ObType(b)->toint)(b);
@@ -113,6 +123,11 @@ FrogObject *int_sub(FrogObject *a, FrogObject *b)
 
 FrogObject *int_mul(FrogObject *a, FrogObject *b)
 {
+	if(FrogIsFloat(b))
+	{
+		return FrogCall_Mul(FromNativeFloat(FIValue(a)), b);
+	}
+
 	if(ObType(b)->toint)
 	{
 		b = (*ObType(b)->toint)(b);
@@ -129,11 +144,16 @@ FrogObject *int_mul(FrogObject *a, FrogObject *b)
 
 FrogObject *int_div(FrogObject *a, FrogObject *b)
 {
-	return b ? b : a; //FIXME return a floating number :D
+	return FrogCall_Div(FromNativeFloat(FIValue(a)), b);
 }
 
 FrogObject *int_divfloor(FrogObject *a, FrogObject *b)
 {
+	if(FrogIsFloat(b))
+	{
+		return FrogCall_DivF(FromNativeFloat(FIValue(a)), b);
+	}
+
 	if(ObType(b)->toint)
 	{
 		b = (*ObType(b)->toint)(b);
@@ -155,6 +175,11 @@ FrogObject *int_divfloor(FrogObject *a, FrogObject *b)
 
 FrogObject *int_mod(FrogObject *a, FrogObject *b)
 {
+	if(FrogIsFloat(b))
+	{
+		return FrogCall_Mod(FromNativeFloat(FIValue(a)), b);
+	}
+
 	if(ObType(b)->toint)
 	{
 		b = (*ObType(b)->toint)(b);
@@ -176,6 +201,11 @@ FrogObject *int_mod(FrogObject *a, FrogObject *b)
 
 FrogObject *int_pow(FrogObject *a, FrogObject *b)
 {
+	if(FrogIsFloat(b))
+	{
+		return FrogCall_Pow(FromNativeFloat(FIValue(a)), b);
+	}
+
 	if(ObType(b)->toint)
 	{
 		b = (*ObType(b)->toint)(b);
@@ -188,7 +218,7 @@ FrogObject *int_pow(FrogObject *a, FrogObject *b)
 	long va = FIValue(a), vb = FIValue(b);
 
 	if(vb < 0)
-		return NULL; //FIXME float
+		return FrogCall_Pow(FromNativeFloat(FIValue(a)), b);
 	if(vb == 0)
 		return FromNativeInteger(1);
 
@@ -364,6 +394,7 @@ FrogType int_type = {
 	int_ccompare,		// complexe compare
 	&int_as_number,		// as number
 	NULL,			// as sequence
+	NULL,			// as iterable
 	NULL,			// call	
 	NULL			// free
 };

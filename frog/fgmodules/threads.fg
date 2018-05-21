@@ -1,0 +1,59 @@
+pthread = native("pthread");
+
+class Thread
+{
+	function __init(this, action)
+	{
+		this.started = False;
+		this.action = action;
+		this.id = -1;
+	}
+
+	function start(this)
+	{
+		if(this.started)
+			return;
+
+		this.started = True;
+		this.id = pthread.start(this.action, this.__callback);
+	}
+
+	function join(this)
+	{
+		return pthread.join(this.id);
+	}
+
+	function detach(this)
+	{
+		pthread.detach(this.id);
+	}
+
+	function __callback(this)
+	{
+		this.started = False;
+	}
+}
+
+class Mutex
+{
+	function __init(this, max)
+	{
+		this.mutex = pthread.create_mutex(max);
+	}
+
+	function lock(this)
+	{
+		pthread.lock_mutex(this.mutex);
+	}
+
+	function trylock(this)
+	{
+		pthread.try_lock_mutex(this.mutex);
+	}
+
+	function unlock(this)
+	{
+		pthread.unlock_mutex(this.mutex);
+	}
+}
+

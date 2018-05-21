@@ -55,6 +55,8 @@ struct automatanode *frog_automata(void)
 		return node;
 
 	node = create_automata(TOKEN_ERROR);
+	simple_automata(node, "inf", TOKEN_INF);
+
 	simple_automata(node, "True", TOKEN_TRUE);
 	simple_automata(node, "False", TOKEN_FALSE);
 	simple_automata(node, "None", TOKEN_NONE);
@@ -73,15 +75,10 @@ struct automatanode *frog_automata(void)
 	simple_automata(node, "return", TOKEN_RETURN);
 	simple_automata(node, "yield", TOKEN_YIELD);
 	simple_automata(node, "function", TOKEN_FUNCTION);
-	simple_automata(node, "static", TOKEN_STATIC);
-	simple_automata(node, "abstract", TOKEN_ABSTRACT);
-	simple_automata(node, "private", TOKEN_PRIVATE);
-	simple_automata(node, "protected", TOKEN_PROTECTED);
-	simple_automata(node, "print", TOKEN_PRINT);
 
 	simple_automata(node, "class", TOKEN_CLASS);
+	simple_automata(node, "extends", TOKEN_EXTENDS);
 
-	simple_automata(node, "include", TOKEN_INCLUDE);
 	simple_automata(node, "{", TOKEN_OPEN);
 	simple_automata(node, "}", TOKEN_CLOSE);
 	simple_automata(node, "(", TOKEN_SOPEN);
@@ -90,6 +87,8 @@ struct automatanode *frog_automata(void)
 	simple_automata(node, "]", TOKEN_ACLOSE);
 	simple_automata(node, ";", TOKEN_IEND);
 	simple_automata(node, ".", TOKEN_SUB);
+	simple_automata(node, ":", TOKEN_SEP);
+	simple_automata(node, "dict{", TOKEN_DICT);
 
 	simple_automata(node, "==", TOKEN_CMPEQ);
 	simple_automata(node, "!=", TOKEN_CMPNE);
@@ -146,6 +145,9 @@ tokenizer *create_tokenizer(nextline linegetter, void *file)
 	tkz->current = NULL;
 	tkz->next = NULL;
 	tkz->prefix = PREFIX_NEW;
+	tkz->linenb = 0;
+	tkz->colnb = 0;
+	tkz->last = NULL;
 
 	return tkz;
 }
@@ -161,6 +163,12 @@ static int next_line(tokenizer *tkz)
 	free(tkz->line);
 	tkz->line = (*tkz->linegetter)(tkz);
 	tkz->linepos = tkz->line;
+
+	if(tkz->line)
+	{
+		tkz->linenb += 1;
+		tkz->colnb = 0;
+	}
 
 	return tkz->line != NULL;
 }
@@ -196,6 +204,7 @@ static fchar next_char(tokenizer *tkz)
 
 static inline void consume_char(tokenizer *tkz)
 {
+	tkz->colnb += 1;
 	if(tkz->linepos) tkz->linepos++;
 } 
 
@@ -255,7 +264,25 @@ tokeninfo *read_int2(tokenizer *tkz)
 	return ctoken(TOKEN_INTEGER, FromNativeInteger(result));
 }
 
-long read_int10s(tokenizer *tkz)
+FrogObject *read_double(tokenizer *tkz, long base)
+{
+	double res = (double) base;
+	double div = 1;
+
+	consume_char(tkz);
+
+	long digit = digit10(next_char(tkz));
+	for(; digit != -1; digit = digit10(next_char(tkz)))
+	{
+		div /= 10;
+		res += div * digit;
+		consume_char(tkz);
+	}
+
+	return FromNativeFloat(res);
+}
+
+FrogObject *read_int10s(tokenizer *tkz)
 {
 	long digit = digit10(next_char(tkz));
 	long result = 0;
@@ -266,13 +293,15 @@ long read_int10s(tokenizer *tkz)
 		consume_char(tkz);
 	}
 
-	return result;
+	if(next_char(tkz) == '.')
+		return read_double(tkz, result);
+
+	return FromNativeInteger(result);
 }
 
 tokeninfo *read_int10(tokenizer *tkz)
 {
-	long base = read_int10s(tkz);
-	return ctoken(TOKEN_INTEGER, FromNativeInteger(base));
+	return ctoken(TOKEN_INTEGER, read_int10s(tkz));
 }
 
 tokeninfo *read_number(tokenizer *tkz)
@@ -420,15 +449,21 @@ tokeninfo *read_keyword(tokenizer *tkz)
 	}
 
 	tokentype = head->tokentype;
+	//alphanum = alphanum && (isalnum(c) || c == '_');
 
-	if(head->tokentype == TOKEN_ERROR)
+	if(head->tokentype == TOKEN_ERROR || alphanum)
 	{
 		if(!alphanum)
 		{
 			goto error;
 		}
-		else
+
+		alphanum = alphanum && (isalnum(c) || c == '_');
+		
+		if(alphanum || tokentype == TOKEN_ERROR)
 		{
+			size_t more =  0;
+
 			for( ; ; consume_char(tkz), c = next_char(tkz))
 			{
 				if(c > 127 || (!isalnum(c) && c != '_'))
@@ -437,6 +472,7 @@ tokeninfo *read_keyword(tokenizer *tkz)
 				}
 
 				len++;
+				more++;
 				add_strbuilder(builder, c);
 			}
 

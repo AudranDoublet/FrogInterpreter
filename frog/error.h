@@ -20,7 +20,23 @@ void FrogErr_Type(char *msg, FrogObject *a);
 
 void FrogErr_Attribute(FrogObject *a, char *type);
 
+void FrogErr_Key(FrogObject *a);
+
 void FrogErr_Name(FrogObject *a);
+
+void FrogErr_ClassName(FrogObject *a);
+
+void FrogErr_SubName(FrogObject *obj, FrogObject *search);
+
+void FrogErr_InstanceName(char *s);
+
+void FrogErr_Module(FrogObject *a);
+
+void FrogErr_BadArgCount(FrogObject *func, size_t good_count, size_t bad_count);
+
+void FrogErr_BadArgCountS(char *func, size_t good_count, size_t bad_count);
+
+void FrogErr_Syntax(int line, int column);
 
 #define FrogErr_Index() FrogErr_Post("IndexError", "Index out of bounds");
 

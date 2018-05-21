@@ -1,0 +1,136 @@
+threads = import("threads");
+
+function Range(a)
+{
+	i = 0;
+
+	while(i < a)
+	{
+		yield i;
+		i += 1;
+	}
+}
+
+function TestThread0()
+{
+	i = 0;
+	while(i < 10)
+	{
+		print("coucou je suis un noiseau");
+		i += 1;
+	}
+
+	return "lama";
+}
+
+function TestThread()
+{
+	t = threads.Thread(TestThread0);
+	t.start();
+
+	t = threads.Thread(TestThread0);
+	t.start();
+
+	i = 0;
+	while(i < 10)
+	{
+		print("coucou je suis un panoiseau");
+		i += 1;
+	}
+
+	print(i, t.join());
+}
+
+class BinTree
+{
+	function __init(this, key, left, right)
+	{
+		this.key = key;
+		this.left = left;
+		this.right = right;
+	}
+}
+
+function TreeHeight(B)
+{
+	if(!B) return -1;
+	return 1 + max( TreeHeight(B.left), TreeHeight(B.right) );
+}
+
+function Fibo(n)
+{
+	a = 0;
+	b = 1;
+
+	while(n > 0)
+	{
+		c = a + b;
+		a = b;
+		b = c;
+		n -= 1;
+	}
+
+	return a;
+}
+
+function Fact(n)
+{
+	res = 1;
+
+	while(n > 1)
+	{
+		res *= n;
+		n -= 1;
+	}
+
+	return res;
+}
+
+function Test(t)
+{
+	B = BinTree("key",
+		BinTree("key2", None, None),
+		None);
+
+	return TreeHeight(B) == 1;
+}
+
+function Eratho(n)
+{
+	L = [True] * (n);
+	i = 3;
+
+	while(i * i < n)
+	{
+		if(!L[i])
+		{
+			i += 2;
+			continue;
+		}
+
+		j = i * 3;
+
+		while(j < n)
+		{
+			L[j] = False;
+			j += i * 2;
+		}
+
+		i += 2;
+	}
+
+	i = 3;
+	res = [2];
+
+	while(i < n)
+	{
+		if(L[i])
+		{
+			res.append(i);
+		}
+
+		i += 2;
+	}
+
+	return res;
+}

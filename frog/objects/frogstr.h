@@ -13,4 +13,12 @@ typedef struct
 FrogObject *utf8tostr(char *utf8);
 
 FrogObject *utf32tostr(fchar *str);
+
+FrogObject *str2obj(fchar *str, size_t len);
+
+char *strtoutf8(FrogObject *obj);
+
+long str_hash(FrogObject *obj);
+
+void init_str_functions(void);
 #endif

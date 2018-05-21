@@ -15,17 +15,23 @@ void parse_terminal(void);
  */
 FrogObject *parse_file(char *filename);
 
-FrogObject *parse_value(tokenizer *tkz, int priority);
+ast *parse_value(tokenizer *tkz, int priority);
 
-FrogObject *parse_if(tokenizer *tkz);
+ast *parse_if(tokenizer *tkz);
 
-FrogObject *parse_while(tokenizer *tkz);
+ast *parse_while(tokenizer *tkz);
 
-FrogObject *parse_dowhile(tokenizer *tkz);
+ast *parse_dowhile(tokenizer *tkz);
 
-FrogObject *parse_for(tokenizer *tkz);
+ast *parse_for(tokenizer *tkz);
 
-FrogObject *parse_breaker(tokenizer *tkz, int type);
+ast *parse_foreach(tokenizer *tkz);
+
+ast *parse_breaker(tokenizer *tkz, int type);
+
+ast *parse_function(tokenizer *tkz);
+
+ast *parse_class(tokenizer *tkz);
 
 /**
  * iend:
@@ -33,7 +39,7 @@ FrogObject *parse_breaker(tokenizer *tkz, int type);
  * => 1: ; need
  * => 2: no ;
  */
-FrogObject *parse_instruction0(tokenizer *tkz, int iend);
+ast *parse_instruction0(tokenizer *tkz, int iend);
 
-FrogObject *parse_instruction(tokenizer *tkz);
+ast *parse_instruction(tokenizer *tkz);
 #endif

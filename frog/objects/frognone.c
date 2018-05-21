@@ -64,6 +64,7 @@ FrogType none_type =
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 	NULL
 };
 
