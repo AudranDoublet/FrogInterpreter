@@ -31,11 +31,13 @@ void FrogErr_DebugPrint(void)
 	printf(": ");
 	Frog_Print(err->message, stdout);
 	printf("\n");
+	error = NULL;
 }
 
 void FrogErr_Post(char *name, char *message)
 {
-	error = create_error(name, message);
+	if(!error)
+		error = create_error(name, message);
 }
 
 void FrogErr_Type(char *msg, FrogObject *a)

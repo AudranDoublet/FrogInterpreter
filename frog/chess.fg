@@ -15,8 +15,52 @@ class ChessGame
 
 		this.texture_black = graphics.LoadTexture("../chess_assets/bg_black.png");
 		this.texture_white = graphics.LoadTexture("../chess_assets/bg_white.png");
+		this.texture_hwhite = graphics.LoadTexture("../chess_assets/bg_normal.png");
+		this.texture_hred = graphics.LoadTexture("../chess_assets/bg_attack.png");
+		this.texture_hgreen = graphics.LoadTexture("../chess_assets/bg_move.png");
 
 		this.texture = graphics.CreateTexture(width, height, graphics.color_white);
+
+		this.highlight = None;
+		this.selected = None;
+		this.player = 1;
+		this.moves = None;
+	}
+
+	function play(this, a, b)
+	{
+		x, y = a;
+		vx, vy = b;
+
+		this.board[vx + vy * 8] = this.board[x + y * 8];
+		this.board[x + y * 8] = None;
+
+		this.player = 1 - this.player;
+		this.moves = None;
+		this.selected = None;
+	}
+
+	function click(this, x, y)
+	{
+		if(this.selected)
+		{
+			foreach((vx, vy) : this.moves)
+				if(vx == x && vy == y)
+				{
+					this.play(this.selected, (vx, vy));
+					return;
+				}
+		}
+
+		piece = this.board[x + y * 8];
+
+		if(!piece || piece.team != this.player)
+			return;
+
+		this.selected = (x, y);
+		this.moves = piece.moves(this.board, x, y);
+
+		print(this.moves);
 	}
 
 	function draw(this)
@@ -48,6 +92,31 @@ class ChessGame
 			}
 		}
 
+		if(this.highlight)
+		{
+			vx, vy = this.highlight;
+			piece = this.board[vx + vy * 8];
+
+			if(piece && piece.team == this.player)
+			{
+				vx, vy = vx * tex_size, vy * tex_size;
+				tex.BlitTexture(this.texture_hwhite, vx, vy);
+			}
+		}	
+
+		if(this.moves)
+		{
+			foreach((x, y) : this.moves)
+			{
+				texture = this.texture_hgreen;
+				if(this.board[x + y * 8])
+					texture = this.texture_hred;
+
+				vx, vy = x * tex_size, y * tex_size;
+				tex.BlitTexture(texture, vx, vy);
+			}
+		}
+		
 		this.window.FlushWindow(this.texture);
 	}
 }
@@ -57,9 +126,34 @@ class ChessGame
 w = graphics.Window("FrogChess", width, height);
 w.OpenWindow();
 
-ChessGame(w).draw();
+game = ChessGame(w);
 
-foreach(event : graphics.WaitEvents())
+foreach(type, x, y : graphics.WaitEvents())
 {
-	print("quit!");
+	if(type == 0)
+		break;
+
+	if(type == 1)
+	{
+		x //= 55;
+		y //= 55;
+
+		if(x < 0 || x >= 8 || y < 0 || y >= 8)
+			continue;
+
+		game.highlight = (x, y);
+	}
+
+	if(type == 2)
+	{
+		x //= 55;
+		y //= 55;
+
+		if(x < 0 || x >= 8 || y < 0 || y >= 8)
+			continue;
+
+		game.click(x, y);
+	}
+
+	game.draw();
 }

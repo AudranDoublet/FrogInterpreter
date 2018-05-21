@@ -24,6 +24,9 @@
 #define AST_CLASS	0x13
 #define AST_KVAR	0x14
 
+#define AST_OR		0x15
+#define AST_AND		0x16
+
 typedef struct {
 	int type;
 	int childcount;

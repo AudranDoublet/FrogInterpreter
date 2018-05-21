@@ -573,6 +573,30 @@ static int ast2bc0(ast *tree, worker *w)
 		w->yield = 1;
 		a2b_addins(w, CODE_YIELD);
 	break;
+	case AST_OR:
+		if(!ast2bc0(tree->childs[0], w))
+			goto error;
+
+		a2b_addins(w, CODE_BRAIF);
+		pos = a2b_addins(w, 0);
+
+		if(!ast2bc0(tree->childs[1], w))
+			goto error;
+
+		w->ins[pos] = w->size;
+	break;
+	case AST_AND:
+		if(!ast2bc0(tree->childs[0], w))
+			goto error;
+
+		a2b_addins(w, CODE_BRAIFN);
+		pos = a2b_addins(w, 0);
+
+		if(!ast2bc0(tree->childs[1], w))
+			goto error;
+
+		w->ins[pos] = w->size;
+	break;
 	}
 
 	free(tree);

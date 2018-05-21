@@ -195,18 +195,81 @@ FrogObject *frogsdl_OpenWindow(FrogObject **args, size_t count, stack *p)
 	return FromNativeInteger((long) r);
 }
 
+FrogObject *sdlev_next(FrogObject *o)
+{
+	UNUSED(o);
+	SDL_Event event;
+
+	FrogObject **array = malloc(sizeof(FrogObject *) * 3);
+
+	if(!array)
+	{
+		FrogErr_Memory();
+		return NULL;
+	}
+
+		SDL_WaitEvent(&event);
+	
+	switch(event.type)
+	{
+	case SDL_QUIT:
+		array[0] = FromNativeInteger(0);
+		array[1] = FrogNone();
+		array[2] = FrogNone();
+
+		break;
+	case SDL_MOUSEMOTION:
+		array[0] = FromNativeInteger(1);
+		array[1] = FromNativeInteger(event.motion.x);
+		array[2] = FromNativeInteger(event.motion.y);
+
+		break;
+	case SDL_MOUSEBUTTONDOWN:
+		array[0] = FromNativeInteger(2);
+		array[1] = FromNativeInteger(event.button.x);
+		array[2] = FromNativeInteger(event.button.y);
+
+		break;
+	case SDL_MOUSEBUTTONUP:
+		array[0] = FromNativeInteger(3);
+		array[1] = FromNativeInteger(event.button.x);
+		array[2] = FromNativeInteger(event.button.y);
+
+		break;
+	default:
+		array[0] = FromNativeInteger(-1);
+		array[1] = FrogNone();
+		array[2] = FrogNone();
+		break;
+	}
+
+	return CreateTuple(array, 3);
+}
+
+FrogObject *sdlev_hasnext(FrogObject *o)
+{
+	UNUSED(o);
+	return FrogTrue();
+}
+
+FrogObject *sdlev_init(FrogObject *o)
+{
+	UNUSED(o);
+	return o;
+}
+
+FrogAsIterable sdlev_iter = { sdlev_init, sdlev_next, sdlev_hasnext };
+
 FrogObject *frogsdl_WaitEvents(FrogObject **args, size_t count, stack *p)
 {
 	UNUSED(args);
 	UNUSED(count);
 	UNUSED(p);
 
-	SDL_Event event;
+	FrogIter *iter = (FrogIter *) CreateIterable0(NULL);
+	if(!iter) return NULL;
 
-	while(1)
-	{
-		SDL_WaitEvent(&event);
-		if(event.type == SDL_QUIT)
-			return FrogTrue();
-	}
+	iter->iterable = &sdlev_iter;
+
+	return (FrogObject *) iter;
 }

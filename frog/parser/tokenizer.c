@@ -125,6 +125,8 @@ struct automatanode *frog_automata(void)
 	simple_automata(node, "|=", TOKEN_ABWOOR);
 	simple_automata(node, "&=", TOKEN_ABWOAND);
 	simple_automata(node, "^=", TOKEN_ABWOXOR);
+	simple_automata(node, "||", TOKEN_BOOLOR);
+	simple_automata(node, "&&", TOKEN_BOOLAND);
 
 	return node;
 }

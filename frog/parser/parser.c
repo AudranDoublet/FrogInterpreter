@@ -38,13 +38,15 @@ int priorities[] =
 	7,			// ^
 	2,			// ~
 	12,			// ,
-	13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13 // assignation
+	13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, // assignation
+	10, 11
 };
 
 int operator_assign[] =
 {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 // assignation
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // assignation
+	0, 0
 };
 
 void *operator_function[] =
@@ -83,7 +85,9 @@ void *operator_function[] =
 	FrogCall_IRShift,
 	FrogCall_IOr,
 	FrogCall_IAnd,
-	FrogCall_IXor
+	FrogCall_IXor,
+	FrogCall_BAnd,
+	FrogCall_BOr
 };
 
 /* 0: value
@@ -522,7 +526,12 @@ ast *parse_value(tokenizer *tkz, int priority)
 			b = parse_value(tkz, priority - 1);
 
 			if(!b) goto error;
-			a = create_call(type, a, b);
+
+			if(priority == 11)
+				a = ast_create2(AST_OR, a, b);
+			else if(priority == 10)
+				a = ast_create2(AST_AND, a, b);
+			else a = create_call(type, a, b);
 		}
 
 		return a;

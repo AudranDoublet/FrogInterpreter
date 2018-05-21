@@ -77,21 +77,9 @@ class Texture
 	}
 }
 
-class Event
-{
-	function __event(this)
-	{
-
-	}
-}
-
 function WaitEvents()
 {
-	foreach(v : sdl.WaitEvents())
-	{
-		if(v == 1)
-			yield 1;
-	}
+	return sdl.WaitEvents();
 }
 
 function CreateTexture(width, height, color)

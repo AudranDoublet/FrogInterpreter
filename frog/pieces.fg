@@ -17,90 +17,244 @@ white_pawn = graphics.LoadTexture("../chess_assets/pawn_white.png");
 function InitPieces()
 {
 	board = [
-		Rook(black_rook),
-		Knight(black_knight),
-		Bishop(black_bishop),
-		Queen(black_queen),
-		King(black_king),
-		Bishop(black_bishop),
-		Knight(black_knight),
-		Rook(black_rook)
+		Rook(black_rook, 0),
+		Knight(black_knight, 0),
+		Bishop(black_bishop, 0),
+		Queen(black_queen, 0),
+		King(black_king, 0),
+		Bishop(black_bishop, 0),
+		Knight(black_knight, 0),
+		Rook(black_rook, 0)
 	];
 
 	foreach(i : range(8))
-		board.append(Pawn(black_pawn));
+		board.append(Pawn(black_pawn, 0));
 
 	board += [None] * 32;
 
 	foreach(i : range(8))
-		board.append(Pawn(white_pawn));
+		board.append(Pawn(white_pawn, 1));
 
 	board += [
-		Rook(white_rook),
-		Knight(white_knight),
-		Bishop(white_bishop),
-		Queen(white_queen),
-		King(white_king),
-		Bishop(white_bishop),
-		Knight(white_knight),
-		Rook(white_rook)
+		Rook(white_rook, 1),
+		Knight(white_knight, 1),
+		Bishop(white_bishop, 1),
+		Queen(white_queen, 1),
+		King(white_king, 1),
+		Bishop(white_bishop, 1),
+		Knight(white_knight, 1),
+		Rook(white_rook, 1)
 	];
 
 	return board;
 }
 
-class ChessPiece
+function is_in(x, y)
 {
-	function __init(this, w)
-	{
+	return x >= 0 && x < 8 && y >= 0 && y < 8;
+}
 
+function moves_way(team, pieces, x, y, dx, dy)
+{
+	vx, vy = x + dx, y + dy;
+
+	while( is_in(vx, vy) )
+	{
+		piece = pieces[vx + vy * 8];
+
+		if(piece)
+		{
+			if(piece.team != team)
+				yield (vx, vy);
+			return;
+		}
+		else
+		{
+			yield (vx, vy);
+		}
+
+		vx += dx;
+		vy += dy;
 	}
 }
 
-class Knight extends ChessPiece
+function moves_diagonal(team, pieces, x, y)
 {
-	function __init(this, texture)
+	foreach(dx : range(-1, 2, 2))
+		foreach(dy : range(-1, 2, 2))
+			foreach(v : moves_way(team, pieces, x, y, dx, dy))
+				yield v;
+}
+
+function moves_lines(team, pieces, x, y)
+{
+	foreach(dx : range(-1, 2, 1))
+		foreach(dy : range(-1, 2, 1))
+		{
+			if(dx == dy) continue;
+			foreach(v : moves_way(team, pieces, x, y, dx, dy))
+			{
+				yield v;
+			}
+		}
+}
+
+knight_moves = [(-2, -1), (-2, 1), (2, -1), (2, 1), (-1, -2),  (1, -2), (-1, 2), (1, 2)];
+
+class Knight
+{
+	function __init(this, texture, team)
 	{
 		this.texture = texture;
+		this.team = team;
+	}
+
+	function moves(this, pieces, x, y)
+	{
+		L = [];
+
+		foreach((dx, dy) : knight_moves)
+		{
+			vx, vy = x + dx, y + dy;
+
+			if(!is_in(vx, vy)) continue;
+			piece = pieces[vx + vy * 8];
+
+			if(piece && piece.team == this.team) continue;
+			L.append((vx, vy));
+		}
+
+		return L;
 	}
 }
 
-class Pawn extends ChessPiece
+class Pawn
 {
-	function __init(this, texture)
+	function __init(this, texture, team)
 	{
 		this.texture = texture;
+		this.team = team;
+	}
+
+	function moves(this, pieces, x, y)
+	{
+		L = []
+		diff = if(this.team) -8 else 8;
+		sd = if(this.team) -1 else 1;
+
+		if(!pieces[x + y * 8 + diff])
+		{
+			L.append((x, y + sd));
+
+			if((y == 1 && this.team == 0) || (y == 6 && this.team == 1))
+			{
+				if(!pieces[x + y * 8 + diff * 2])
+					L.append((x, y + sd * 2));
+			}
+		}
+
+		if(x < 7)
+		{
+			piece = pieces[x + 1 + y * 8 + diff];
+
+			if(piece && piece.team != this.team)
+				L.append((x + 1, y + sd));
+		}
+
+		if(x > 0)
+		{
+			piece = pieces[x - 1 + y * 8 + diff];
+
+			if(piece && piece.team != this.team)
+				L.append((x - 1, y + sd));
+		}
+
+		return L;
 	}
 }
 
-class Rook extends ChessPiece
+class Rook
 {
-	function __init(this, texture)
+	function __init(this, texture, team)
 	{
 		this.texture = texture;
+		this.team = team;
+	}
+
+	function moves(this, pieces, x, y)
+	{
+		L = []
+		foreach( (x, y) : moves_lines(this.team, pieces, x, y) )
+			L.append((x, y));
+
+		return L;
 	}
 }
 
-class Bishop extends ChessPiece
+class Bishop
 {
-	function __init(this, texture)
+	function __init(this, texture, team)
 	{
 		this.texture = texture;
+		this.team = team;
+	}
+
+	function moves(this, pieces, x, y)
+	{
+		L = []
+		foreach( (x, y) : moves_diagonal(this.team, pieces, x, y) )
+			L.append((x, y));
+
+		return L;
 	}
 }
 
-class King extends ChessPiece
+class King
 {
-	function __init(this, texture)
+	function __init(this, texture, team)
 	{
 		this.texture = texture;
+		this.team = team;
+	}
+
+	function moves(this, pieces, x, y)
+	{
+		L = []
+		foreach(dx : range(-1, 2, 1))
+			foreach(dy : range(-1, 2, 1))
+			{
+				vx, vy = dx + x, dy + y;
+
+				if(!is_in(vx, vy)) continue;
+				piece = pieces[vx + vy * 8];
+
+				if(piece && piece.team == this.team) continue;
+				L.append((vx, vy));
+			}
+
+		return L;
 	}
 }
 
-class Queen extends ChessPiece
+class Queen
 {
-	function __init(this, texture)
+	function __init(this, texture, team)
 	{
 		this.texture = texture;
+		this.team = team;
+	}
+
+	function moves(this, pieces, x, y)
+	{
+		L = []
+
+		foreach( (vx, vy) : moves_diagonal(this.team, pieces, x, y) )
+			L.append((vx, vy));
+
+		foreach( (vx, vy) : moves_lines(this.team, pieces, x, y) )
+			L.append((vx, vy));
+
+
+		return L;
 	}
 }

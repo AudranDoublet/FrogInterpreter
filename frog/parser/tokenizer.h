@@ -49,7 +49,10 @@
 #define TOKEN_ABWOAND	0x21 // &=
 #define TOKEN_ABWOXOR	0x22 // ^=
 
-#define OPERATORS_END	0x22
+#define TOKEN_BOOLAND	0x23 // &&
+#define TOKEN_BOOLOR	0x24 // ||
+
+#define OPERATORS_END	0x25
 
 // Value
 #define TOKEN_INTEGER	0x30 // 10 0xaa

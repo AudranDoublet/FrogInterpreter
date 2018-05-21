@@ -14,6 +14,16 @@ void Frog_Free(FrogObject *o)
 	free(o);
 }
 
+FrogObject *FrogCall_BAnd(FrogObject *a, FrogObject *b)
+{
+	return IsTrue(FrogCall_AsBool(a)) && IsTrue(FrogCall_AsBool(b)) ? FrogTrue() : FrogFalse();
+}
+
+FrogObject *FrogCall_BOr(FrogObject *a, FrogObject *b)
+{
+	return IsTrue(FrogCall_AsBool(a)) || IsTrue(FrogCall_AsBool(b)) ? FrogTrue() : FrogFalse();
+}
+
 FrogObject *Frog_ToString(FrogObject *a)
 {
 	if(ObType(a)->tostr)
@@ -76,6 +86,9 @@ FrogObject *FrogCall_AsBool(FrogObject *o)
 	else if(IsNone(o))
 	{
 		res = 0;
+	}
+	else if(IsInstance(o))
+	{
 	}
 	else if(ObType(o)->size)
 	{
