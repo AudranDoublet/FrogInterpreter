@@ -6,6 +6,94 @@ pieces = include("pieces.fg");
 # constants
 tex_size = 55;
 
+function test_valid(board, player, king)
+{
+	kx, ky = king;
+
+	foreach(x : range(8))
+	foreach(y : range(8))
+	{
+		piece = board[x + y * 8];
+		if(!piece || piece.team == player) continue;
+
+		foreach((vx, vy) : piece.moves(board, x, y))
+			if(vx == kx && vy == ky)
+				return False;
+	}
+
+	return True;
+}
+
+function test_move(board, from, to, player, king)
+{
+	x1, y1 = from;
+	x2, y2 = to;
+
+	if(from == king)
+		king = to;
+
+	nboard = []
+	foreach (piece : board)
+		nboard.append(piece);
+
+	nboard[x2 + y2 * 8] = nboard[x1 + y1 *8];
+	nboard[x1 + y1 * 8] = None;
+
+	return test_valid(nboard, player, king);
+}
+
+function filter_moves(board, from, moves, player)
+{
+	king = None;
+
+	foreach (x : range(8))
+	foreach (y : range(8))
+	{
+		p = board[x + y * 8];
+		if(p && p.type == 4 && p.team == player)
+			king = x, y;
+	}
+
+	L = [];
+
+	foreach((x, y) : moves)
+	{
+		if(test_move(board, from, (x, y), player, king))
+			L.append((x, y));
+	}
+
+	return L;
+}
+
+function is_checkmate(board, player)
+{
+	king = None;
+
+	foreach (x : range(8))
+	foreach (y : range(8))
+	{
+		p = board[x + y * 8];
+		if(p && p.type == 4 && p.team == player)
+			king = x, y;
+	}
+
+	if(test_valid(board, player, king))
+		return 0, king;
+
+	foreach (x : range(8))
+	foreach (y : range(8))
+	{
+		piece = board[x + y * 8];
+
+		if(!piece || piece.team != player) continue;
+		foreach(move : piece.moves(board, x, y))
+			if(test_move(board, (x, y), move, player, king))
+				return 2, king;
+	}
+
+	return 1, king;
+}
+
 class ChessGame
 {
 	function __init(this, w)
@@ -22,9 +110,11 @@ class ChessGame
 		this.texture = graphics.CreateTexture(width, height, graphics.color_white);
 
 		this.highlight = None;
+		this.kings = [];
 		this.selected = None;
 		this.player = 1;
 		this.moves = None;
+		this.end = False;
 	}
 
 	function play(this, a, b)
@@ -38,6 +128,29 @@ class ChessGame
 		this.player = 1 - this.player;
 		this.moves = None;
 		this.selected = None;
+
+		this.kings = [];
+		status, pos = is_checkmate(this.board, 0);
+
+		if(status == 2)
+			this.kings.append(pos);
+
+		if(status == 1)
+		{
+			this.end = True;
+			return;
+		}
+
+		status, pos = is_checkmate(this.board, 1);
+
+		if(status == 2)
+			this.kings.append(pos);
+
+		if(status == 1)
+		{
+			this.end = True;
+			return;
+		}
 	}
 
 	function click(this, x, y)
@@ -59,8 +172,7 @@ class ChessGame
 
 		this.selected = (x, y);
 		this.moves = piece.moves(this.board, x, y);
-
-		print(this.moves);
+		this.moves = filter_moves(this.board, (x, y), this.moves, this.player);
 	}
 
 	function draw(this)
@@ -115,6 +227,14 @@ class ChessGame
 				vx, vy = x * tex_size, y * tex_size;
 				tex.BlitTexture(texture, vx, vy);
 			}
+		}
+
+		foreach((x, y) : this.kings)
+		{
+			vx, vy = x * tex_size, y * tex_size;
+			texture = this.texture_hred;
+
+			tex.BlitTexture(texture, vx, vy);
 		}
 		
 		this.window.FlushWindow(this.texture);
