@@ -99,8 +99,9 @@ char *FG_HL_extensions[] = {".fg", NULL};
 char *FG_HL_keywords[] = {
 	"True|", "False|", "None|", "if", "else", "while", "for", "foreach", "do", "continue",
 	"break", "try", "catch", "return", "yield", "function", "static", "abstract",
-	"private", "protected", "class", "include", "this|", "print", "append|", "remove|" ,
-	"put|", "clear|", "import", "range|", NULL
+	"private", "protected", "class", "include|", "this|", "print|", "import|",
+	"range|", "extends", "native|", "max|", "min|",
+	"id|", "str|", "len|", NULL
 };
 
 struct editorSyntax HLDB[] = {

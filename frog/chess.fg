@@ -101,13 +101,19 @@ class ChessGame
 		this.window = w;
 		this.board = pieces.InitPieces();
 
-		this.texture_black = graphics.LoadTexture("../chess_assets/bg_black.png");
-		this.texture_white = graphics.LoadTexture("../chess_assets/bg_white.png");
-		this.texture_hwhite = graphics.LoadTexture("../chess_assets/bg_normal.png");
-		this.texture_hred = graphics.LoadTexture("../chess_assets/bg_attack.png");
-		this.texture_hgreen = graphics.LoadTexture("../chess_assets/bg_move.png");
+		this.texture_black 
+			= graphics.LoadTexture("../chess_assets/bg_black.png");
+		this.texture_whitei
+			= graphics.LoadTexture("../chess_assets/bg_white.png");
+		this.texture_hwhite
+			= graphics.LoadTexture("../chess_assets/bg_normal.png");
+		this.texture_hred
+			= graphics.LoadTexture("../chess_assets/bg_attack.png");
+		this.texture_hgreen
+			= graphics.LoadTexture("../chess_assets/bg_move.png");
 
-		this.texture = graphics.CreateTexture(width, height, graphics.color_white);
+		this.texture
+			= graphics.CreateTexture(width, height, graphics.color_white);
 
 		this.highlight = None;
 		this.kings = [];
@@ -132,7 +138,7 @@ class ChessGame
 		this.kings = [];
 		status, pos = is_checkmate(this.board, 0);
 
-		if(status == 2)
+		if(status)
 			this.kings.append(pos);
 
 		if(status == 1)
@@ -143,7 +149,7 @@ class ChessGame
 
 		status, pos = is_checkmate(this.board, 1);
 
-		if(status == 2)
+		if(status)
 			this.kings.append(pos);
 
 		if(status == 1)
@@ -201,10 +207,15 @@ class ChessGame
 				{
 					tex.BlitTexture(piece.texture, vx, vy);
 				}
+
+				if(this.end)
+				{
+					tex.BlitTexture(this.texture_hwhite, vx, vy);
+				}
 			}
 		}
 
-		if(this.highlight)
+		if(this.highlight && !this.end)
 		{
 			vx, vy = this.highlight;
 			piece = this.board[vx + vy * 8];
@@ -216,7 +227,7 @@ class ChessGame
 			}
 		}	
 
-		if(this.moves)
+		if(this.moves && !this.end)
 		{
 			foreach((x, y) : this.moves)
 			{
@@ -274,6 +285,17 @@ foreach(type, x, y : graphics.WaitEvents())
 
 		game.click(x, y);
 	}
+
+	game.draw();
+
+	if(game.end)
+		break;
+}
+
+foreach(type, x, y : graphics.WaitEvents())
+{
+	if(type == 0)
+		break;
 
 	game.draw();
 }
