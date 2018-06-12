@@ -103,7 +103,7 @@ class ChessGame
 
 		this.texture_black 
 			= graphics.LoadTexture("../chess_assets/bg_black.png");
-		this.texture_whitei
+		this.texture_white
 			= graphics.LoadTexture("../chess_assets/bg_white.png");
 		this.texture_hwhite
 			= graphics.LoadTexture("../chess_assets/bg_normal.png");
