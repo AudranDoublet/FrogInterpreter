@@ -104,7 +104,6 @@ FrogObject *instance_setseq(FrogObject *str, FrogObject *b, FrogObject *v, binar
 {
 	FrogInstance *o = (FrogInstance *) str;
 	FrogObject *func = get_hashmap(o->children, utf8tostr("__seq_set"));
-	FrogObject *result = NULL;
 
 	if(!func)
 	{
@@ -129,13 +128,10 @@ FrogObject *instance_setseq(FrogObject *str, FrogObject *b, FrogObject *v, binar
 	args[0] = b;
 	args[1] = v;
 
-	result = FrogCall_Call(func, args, 2, st);
+	FrogCall_Call(func, args, 2, st);
 	free(st);
 
-	if(!result) return NULL;
-	result = Frog_ToString(result);
-
-	return result;
+	return v;
 }
 
 FrogObject *instance_size(FrogObject *str)
