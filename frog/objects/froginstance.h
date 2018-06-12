@@ -13,4 +13,6 @@ FrogObject *CreateInstance(FrogObject *parent, hashmap *children);
 int IsInstance(FrogObject *o);
 
 int InstanceInit(FrogObject *ins, FrogObject **args, size_t count, stack *p);
+
+FrogObject *InstanceIterator(FrogObject *ins);
 #endif

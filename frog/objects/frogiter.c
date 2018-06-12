@@ -52,6 +52,17 @@ FrogObject *CreateIterable(FrogObject *base)
 		return NULL;
 	}
 
+	if(IsInstance(base))
+	{
+		base = InstanceIterator(base);
+
+		if(!base)
+		{
+			Frog_Free((FrogObject *) iter);
+			return NULL;
+		}
+	}
+
 	iter->base = base;
 	iter->iterable = ObType(base)->as_iterable;
 	iter->values = NULL;

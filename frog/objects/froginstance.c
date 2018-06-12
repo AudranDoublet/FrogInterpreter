@@ -97,6 +97,41 @@ FrogObject *instance_getseq(FrogObject *str, FrogObject *b)
 	result = FrogCall_Call(func, args, 1, st);
 	free(st);
 
+	return result;
+}
+
+FrogObject *instance_setseq(FrogObject *str, FrogObject *b, FrogObject *v, binaryfunction f)
+{
+	FrogInstance *o = (FrogInstance *) str;
+	FrogObject *func = get_hashmap(o->children, utf8tostr("__seq_set"));
+	FrogObject *result = NULL;
+
+	if(!func)
+	{
+		FrogErr_InstanceName("__seq_set");
+		return NULL;
+	}
+
+	if(f)
+	{
+		FrogObject *tmp = instance_getseq(str, b);
+
+		if(!tmp) return NULL;
+		v = f(tmp, v);
+
+		if(!v) return NULL;
+	}
+
+	stack *st = create_stack();
+	if(!st) return NULL;
+
+	FrogObject **args = malloc(sizeof(FrogObject *) * 2);
+	args[0] = b;
+	args[1] = v;
+
+	result = FrogCall_Call(func, args, 2, st);
+	free(st);
+
 	if(!result) return NULL;
 	result = Frog_ToString(result);
 
@@ -160,6 +195,20 @@ FrogObject *instance_set(FrogObject *str, FrogObject *key, FrogObject *value,
 	return value;
 }
 
+FrogObject *InstanceIterator(FrogObject *str)
+{
+	FrogInstance *o = (FrogInstance *) str;
+	FrogObject *func = get_hashmap(o->children, utf8tostr("__iter"));
+
+	if(!func)
+	{
+		FrogErr_InstanceName("__iter");
+		return NULL;
+	}
+
+	return func;
+}
+
 int InstanceInit(FrogObject *ins, FrogObject **args, size_t count, stack *p)
 {
 	FrogInstance *o = (FrogInstance *) ins;
@@ -204,7 +253,7 @@ int IsInstance(FrogObject *o)
 
 FrogAsSequence ins_as_sequence =
 {
-	NULL,
+	instance_setseq,
 	instance_getseq
 };
 
