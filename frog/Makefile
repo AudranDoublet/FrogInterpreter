@@ -2,7 +2,7 @@
  
 # Compilers vars
 CC=gcc
-CPPFLAGS= -MMD #-fsanitize=address
+CPPFLAGS= -MMD -g #-fsanitize=address
 CFLAGS= -O4 -Wall -Wextra -std=c99
 LDFLAGS=
 LDLIBS=-lreadline -lpthread -lm -lSDL2 -lSDL2_image

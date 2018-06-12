@@ -295,6 +295,23 @@ FrogObject *lst_size(FrogObject *o)
 	return FromNativeInteger(((FrogList *) o)->length);
 }
 
+FrogObject *lst_contains(FrogObject *o, FrogObject *v)
+{
+	FrogList *l = (FrogList *) o;
+
+	for(size_t i = 0; i < l->length; i++)
+	{
+		FrogObject *o = FrogCall_EQ(l->array[i], v);
+
+		if(!o) return NULL;
+
+		if(IsTrue(o))
+			return FrogTrue();
+	}
+
+	return FrogFalse();
+}
+
 FrogObject *lst_get(FrogObject *lst, FrogObject *value)
 {
 	FrogObject *func = get_hashmap(lst_functions, value);
@@ -449,7 +466,8 @@ FrogObject *lst_i_hasnext(FrogObject *o)
 FrogAsSequence lst_as_sequence =
 {
 	lst_set_at,
-	lst_get_at
+	lst_get_at,
+	lst_contains
 };
 
 FrogAsIterable lst_as_iterable = {

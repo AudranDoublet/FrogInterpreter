@@ -100,6 +100,31 @@ FrogObject *instance_getseq(FrogObject *str, FrogObject *b)
 	return result;
 }
 
+FrogObject *instance_inseq(FrogObject *str, FrogObject *b)
+{
+	FrogInstance *o = (FrogInstance *) str;
+	FrogObject *func = get_hashmap(o->children, utf8tostr("__seq_in"));
+	FrogObject *result = NULL;
+
+	if(!func)
+	{
+		FrogErr_InstanceName("__seq_in");
+		return NULL;
+	}
+
+	stack *st = create_stack();
+	if(!st) return NULL;
+
+	FrogObject **args = malloc(sizeof(FrogObject *));
+	args[0] = b;
+
+	result = FrogCall_Call(func, args, 1, st);
+	free(st);
+
+	return result;
+}
+
+
 FrogObject *instance_setseq(FrogObject *str, FrogObject *b, FrogObject *v, binaryfunction f)
 {
 	FrogInstance *o = (FrogInstance *) str;
@@ -250,7 +275,8 @@ int IsInstance(FrogObject *o)
 FrogAsSequence ins_as_sequence =
 {
 	instance_setseq,
-	instance_getseq
+	instance_getseq,
+	instance_inseq
 };
 
 FrogType instance_type = {

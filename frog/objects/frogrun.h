@@ -8,6 +8,8 @@ int Frog_Print(FrogObject *a, FILE *out);
 
 long Frog_Hash(FrogObject *a);
 
+FrogObject *FrogCall_In(FrogObject *a, FrogObject *b);
+
 FrogObject *FrogCall_BAnd(FrogObject *a, FrogObject *b);
 
 FrogObject *FrogCall_BOr(FrogObject *a, FrogObject *b);

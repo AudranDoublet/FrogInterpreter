@@ -89,6 +89,7 @@ struct automatanode *frog_automata(void)
 	simple_automata(node, ".", TOKEN_SUB);
 	simple_automata(node, ":", TOKEN_SEP);
 	simple_automata(node, "dict{", TOKEN_DICT);
+	simple_automata(node, "set{", TOKEN_SET);
 
 	simple_automata(node, "==", TOKEN_CMPEQ);
 	simple_automata(node, "!=", TOKEN_CMPNE);
@@ -127,6 +128,7 @@ struct automatanode *frog_automata(void)
 	simple_automata(node, "^=", TOKEN_ABWOXOR);
 	simple_automata(node, "||", TOKEN_BOOLOR);
 	simple_automata(node, "&&", TOKEN_BOOLAND);
+	simple_automata(node, "in", TOKEN_OPIN);
 
 	return node;
 }

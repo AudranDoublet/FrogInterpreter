@@ -51,8 +51,9 @@
 
 #define TOKEN_BOOLAND	0x23 // &&
 #define TOKEN_BOOLOR	0x24 // ||
+#define TOKEN_OPIN	0x25 // in
 
-#define OPERATORS_END	0x25
+#define OPERATORS_END	0x26
 
 // Value
 #define TOKEN_INTEGER	0x30 // 10 0xaa
@@ -95,6 +96,7 @@
 #define TOKEN_SUB	0x78 // .
 #define TOKEN_SEP	0x79 // :
 #define TOKEN_DICT	0x7a // dict{
+#define TOKEN_SET	0x7b // set{
 
 #define TOKEN_INF	0x80 // inf
 

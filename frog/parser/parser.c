@@ -18,7 +18,7 @@ int prioritytype[] = {
  * 6 : &
  * 7 : ^
  * 8 : |
- * 9 : == != <= < >= >
+ * 9 : == != <= < >= > in
  * 10: &&
  * 11: ||
  * 12: ,
@@ -39,14 +39,15 @@ int priorities[] =
 	2,			// ~
 	12,			// ,
 	13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, // assignation
-	10, 11
+	10, 11,			// && ||
+	9,			// in
 };
 
 int operator_assign[] =
 {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, // assignation
-	0, 0
+	0, 0, 0
 };
 
 void *operator_function[] =
@@ -87,7 +88,8 @@ void *operator_function[] =
 	FrogCall_IAnd,
 	FrogCall_IXor,
 	FrogCall_BAnd,
-	FrogCall_BOr
+	FrogCall_BOr,
+	FrogCall_In
 };
 
 /* 0: value
@@ -395,8 +397,14 @@ ast *parse_single_value(tokenizer *tkz)
 		if(!args) return NULL;
 		base = ast_create2(AST_CALL, ast_constant(function_create_map), args);
 	}
+	else if(tkn->type == TOKEN_SET)
+	{
+		consume_token(tkz);
+		ast **args = create_args(tkz, TOKEN_CLOSE);
 
-	//FIXME map
+		if(!args) return NULL;
+		base = ast_create2(AST_CALL, ast_constant(function_create_list), args);
+	}
 
 	if(!base)
 	{

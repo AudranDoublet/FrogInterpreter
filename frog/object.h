@@ -67,7 +67,8 @@ typedef struct {
 
 typedef struct {
 	setfunction set;
-	binaryfunction  get;
+	binaryfunction get;
+	binaryfunction contains;
 } FrogAsSequence;
 
 struct FrogObject {

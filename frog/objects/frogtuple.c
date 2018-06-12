@@ -151,6 +151,17 @@ FrogObject *tuple_get_at(FrogObject *o, FrogObject *b)
 	return s->array[pos];
 }
 
+FrogObject *tuple_contains(FrogObject *o, FrogObject *v)
+{
+	FrogList *l = (FrogList *) o;
+
+	for(size_t i = 0; i < l->length; i++)
+		if(IsTrue( FrogCall_EQ(l->array[i], v) ))
+			return FrogTrue();
+
+	return FrogFalse();
+}
+
 FrogObject *tuple_add(FrogObject *a, FrogObject *b)
 {
 	if(ObType(b) == &tuple_type)
@@ -309,7 +320,8 @@ int FrogIsTuple(FrogObject *o)
 FrogAsSequence tuple_as_sequence =
 {
 	NULL,
-	tuple_get_at
+	tuple_get_at,
+	tuple_contains
 };
 
 FrogAsIterable tuple_as_iterable = {

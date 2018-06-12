@@ -331,7 +331,8 @@ FrogObject *CreateMap(FrogObject **array, long len)
 FrogAsSequence map_as_sequence =
 {
 	map_set_at,
-	map_get_at
+	map_get_at,
+	map_contains
 };
 
 FrogType map_type = {

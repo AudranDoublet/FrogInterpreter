@@ -298,6 +298,11 @@ FrogObject *str_get_charat(FrogObject *o, FrogObject *b)
 	return str_nget_charat(o, pos);
 }
 
+FrogObject *str_contains(FrogObject *o, FrogObject *v)
+{
+	return FrogFalse();
+}
+
 FrogObject *str_add(FrogObject *a, FrogObject *b)
 {
 	if(ObType(b) == &str_type)
@@ -429,7 +434,8 @@ FrogObject *str_i_hasnext(FrogObject *o)
 FrogAsSequence str_as_sequence =
 {
 	NULL,
-	str_get_charat
+	str_get_charat,
+	str_contains
 };
 
 FrogAsIterable str_as_iterable = {

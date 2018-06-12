@@ -637,6 +637,25 @@ FrogObject *FrogCall_Set(FrogObject *a, FrogObject *b, FrogObject *c, binaryfunc
 	return res;
 }
 
+
+FrogObject *FrogCall_In(FrogObject *a, FrogObject *b)
+{
+	FrogAsSequence *type = ObType(b)->as_sequence;
+
+	if(!type || !type->contains)
+	{
+		FrogErr_Attribute(a, "in (sequene");
+		return NULL;
+	}
+	else
+	{
+		FrogObject *o = (type->contains(b, a));
+		if(!o) return NULL;
+
+		return IsTrue(o) ? FrogTrue() : FrogFalse();
+	}
+}
+
 FrogObject *FrogCall_SeqGet(FrogObject *a, FrogObject *b)
 {
 	FrogAsSequence *type = ObType(a)->as_sequence;
