@@ -403,7 +403,7 @@ ast *parse_single_value(tokenizer *tkz)
 		ast **args = create_args(tkz, TOKEN_CLOSE);
 
 		if(!args) return NULL;
-		base = ast_create2(AST_CALL, ast_constant(function_create_list), args);
+		base = ast_create2(AST_CALL, ast_constant(function_create_set), args);
 	}
 
 	if(!base)
