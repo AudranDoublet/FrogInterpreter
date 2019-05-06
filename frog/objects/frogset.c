@@ -236,7 +236,6 @@ FrogObject *set_union(FrogObject *a, FrogObject *b)
 	return res;
 }
 
-/*
 FrogObject *set_union(FrogObject *a, FrogObject *b)
 {
 	if(ObType(b) != &set_type)
@@ -262,7 +261,6 @@ FrogObject *set_union(FrogObject *a, FrogObject *b)
 
 	return res;
 }
-*/
 
 FrogObject *set_add(FrogObject *o, FrogObject *b)
 {
