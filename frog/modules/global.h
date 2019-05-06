@@ -20,8 +20,6 @@ FrogObject *global_dict(FrogObject **args, size_t count, stack *p);
 
 FrogObject *global_tuple(FrogObject **args, size_t count, stack *p);
 
-FrogObject *global_set(FrogObject **args, size_t count, stack *p);
-
 FrogObject *global_native(FrogObject **args, size_t count, stack *p);
 
 FrogObject *global_import(FrogObject **args, size_t count, stack *p);

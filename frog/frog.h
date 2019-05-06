@@ -36,7 +36,6 @@ typedef __ssize_t ssize_t; /** signed size_t **/
 #include "objects/froginstance.h"
 #include "objects/froglist.h"
 #include "objects/frogdict.h"
-#include "objects/frogset.h"
 #include "objects/frogiter.h"
 #include "objects/frogtuple.h"
 
@@ -46,7 +45,6 @@ typedef __ssize_t ssize_t; /** signed size_t **/
 #include "modules/str.h"
 #include "modules/list.h"
 #include "modules/dict.h"
-#include "modules/set.h"
 #include "modules/pthread.h"
 #include "modules/sdl.h"
 

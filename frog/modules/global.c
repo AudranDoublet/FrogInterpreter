@@ -229,12 +229,6 @@ FrogObject *global_dict(FrogObject **args, size_t count, stack *p)
 	return CreateMap(args, count);
 }
 
-FrogObject *global_set(FrogObject **args, size_t count, stack *p)
-{
-	UNUSED(p);
-	return CreateSet(args, count);
-}
-
 FrogObject *range_next(FrogObject *o)
 {
 	FrogIter *i = (FrogIter *) o;

@@ -6,7 +6,6 @@ int init_frog(void)
 	init_str_functions();
 	init_lst_functions();
 	init_map_functions();
-	init_set_functions();
 
 	init_native_modules();
 
