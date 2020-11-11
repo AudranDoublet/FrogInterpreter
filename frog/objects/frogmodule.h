@@ -14,7 +14,7 @@ typedef struct {
 	long hash;
 } FrogModule;
 
-FrogObject *function_create_list, *function_create_map, *function_create_tuple;
+extern FrogObject *function_create_list, *function_create_map, *function_create_tuple;
 
 FrogObject *EmptyModule(char *name);
 

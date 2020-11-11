@@ -3,7 +3,7 @@
 FrogBool trueObj, falseObj;
 FrogType bool_type;
 
-FrogAsNumber int_as_number;
+extern FrogAsNumber int_as_number;
 int int_scompare(FrogObject *a, FrogObject *b);
 int int_ccompare(FrogObject *a, FrogObject *b);
 

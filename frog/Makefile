@@ -2,21 +2,21 @@
  
 # Compilers vars
 CC=gcc
-CPPFLAGS= -MMD -g #-fsanitize=address
+CPPFLAGS=#-fsanitize=address
 CFLAGS= -O4 -Wall -Wextra -std=c99
 LDFLAGS=
 LDLIBS=-lreadline -lpthread -lm -lSDL2 -lSDL2_image
  
-SRC= objects/*.c parser/*.c exec/*.c modules/*.c common/strutils.c common/hashmap.c error.c main.c
+SRC= $(shell find -name '*.c')
 OBJ= ${SRC:.c=.o}
 DEP= ${SRC:.c=.d}
- 
+
 all: frog
 
 -include ${DEP}
  
-frog:
-	${CC} ${CPPFLAGS} ${CFLAGS} ${SRC} -o frog ${LDLIBS}
+frog: ${OBJ}
+	${CC} -o $@ ${CPPFLAGS} ${CFLAGS} $^ ${LDLIBS}
  
 clean:
 	rm -f ${DEP} ${OBJ} frog frog.d
